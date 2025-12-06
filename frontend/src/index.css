@@ -19,3 +19,15 @@ code {
 .new-arrival-button{
   color: white;
 }
+
+.login-from input{
+  color: black;
+}
+
+[data-theme=dark] header{
+  background-color: #222222;
+}
+
+[data-theme=light] header{
+  background-color: white;
+}

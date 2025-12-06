@@ -4,16 +4,13 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import productRoutes from './routes/productRoutes.js';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // To parse JSON bodies
+app.use(cors());
+app.use(express.json());
 
-// --- Database Connection ---
 const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGO_URI);
@@ -24,14 +21,12 @@ const connectDB = async () => {
     }
 };
 
-connectDB(); // Connect to the database
+connectDB();
 
-// --- API Routes ---
-app.get('/', (req, res) => {
+app.get('/abcd', (req, res) => {
     res.send('API is running...');
 });
 
-// Use the product routes
 app.use('/api/products', productRoutes);
 
 // TODO: Add User authentication routes (login, register)
