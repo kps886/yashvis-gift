@@ -1,9 +1,8 @@
 import mongoose from 'mongoose';
 
-// Schema for product variations (e.g., color, size)
 const variationSchema = new mongoose.Schema({
-    name: { type: String, required: true }, // e.g., "Color" or "Size"
-    options: [{ type: String, required: true }] // e.g., ["Black", "Tan"] or ["50ml", "100ml"]
+    name: { type: String, required: true },
+    options: [{ type: String, required: true }]
 });
 
 const productSchema = new mongoose.Schema({
@@ -27,7 +26,7 @@ const productSchema = new mongoose.Schema({
         enum: ['Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games', 'Home & Kitchen']
     },
     images: [{
-        type: String, // Array of image URLs
+        type: String,
         required: true
     }],
     stock: {
@@ -35,18 +34,21 @@ const productSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
-    variations: [variationSchema], // Array of variations
-    tags: [String], // For badges like "New Arrival", "Bestseller"
+    variations: [variationSchema],
+    tags: [String],
     reviews: [{
-        // This would be a more complex object in a real app
-        user: String,
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        name: String,
         rating: Number,
         comment: String,
     }],
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
 }, {
-    timestamps: true // Adds createdAt and updatedAt fields
+    timestamps: true
 });
 
 const Product = mongoose.model('Product', productSchema);
-
 export default Product;

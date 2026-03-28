@@ -1,31 +1,56 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+        trim: true,
     },
     email: {
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
+        trim: true,
     },
     password: {
         type: String,
         required: true,
-        // In a real app, this should be hashed before saving!
+        minlength: 6,
     },
-    isAdmin: {
+    // Role hierarchy: admin > shopkeeper > employee > user
+    role: {
+        type: String,
+        enum: ['admin', 'shopkeeper', 'employee', 'user'],
+        default: 'user',
+    },
+    // Optional: link employees/shopkeepers to a shop
+    shopId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Shop',
+        default: null,
+    },
+    isActive: {
         type: Boolean,
-        required: true,
-        default: false,
+        default: true,
     },
-    // You could add fields for Google/Facebook IDs for social login
-    // googleId: String,
 }, {
     timestamps: true,
 });
 
-const User = mongoose.model('User', userSchema);
+// Hash password before saving
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
 
+// Method to compare password
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const User = mongoose.model('User', userSchema);
 export default User;

@@ -1,0 +1,89 @@
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
+
+export const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(() => {
+        const stored = localStorage.getItem('charmingUser');
+        return stored ? JSON.parse(stored) : null;
+    });
+    const [loading, setLoading] = useState(false);
+    const [authError, setAuthError] = useState(null);
+
+    // Set axios default auth header whenever user changes
+    useEffect(() => {
+        if (user?.token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+        } else {
+            delete axios.defaults.headers.common['Authorization'];
+        }
+    }, [user]);
+
+    const login = async (email, password) => {
+        setLoading(true);
+        setAuthError(null);
+        try {
+            const { data } = await axios.post('/api/users/login', { email, password });
+            setUser(data);
+            localStorage.setItem('charmingUser', JSON.stringify(data));
+            setLoading(false);
+            return { success: true, role: data.role };
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Login failed. Please try again.';
+            setAuthError(msg);
+            setLoading(false);
+            return { success: false, error: msg };
+        }
+    };
+
+    const register = async (name, email, password) => {
+        setLoading(true);
+        setAuthError(null);
+        try {
+            const { data } = await axios.post('/api/users/register', { name, email, password });
+            setUser(data);
+            localStorage.setItem('charmingUser', JSON.stringify(data));
+            setLoading(false);
+            return { success: true, role: data.role };
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Registration failed. Please try again.';
+            setAuthError(msg);
+            setLoading(false);
+            return { success: false, error: msg };
+        }
+    };
+
+    const logout = () => {
+        setUser(null);
+        localStorage.removeItem('charmingUser');
+        localStorage.removeItem('cart');
+        delete axios.defaults.headers.common['Authorization'];
+    };
+
+    // Role helpers
+    const isAdmin = user?.role === 'admin';
+    const isShopkeeper = user?.role === 'shopkeeper' || isAdmin;
+    const isEmployee = user?.role === 'employee' || isShopkeeper;
+    const isLoggedIn = !!user;
+
+    return (
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            authError,
+            setAuthError,
+            login,
+            register,
+            logout,
+            isAdmin,
+            isShopkeeper,
+            isEmployee,
+            isLoggedIn,
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export const useAuth = () => useContext(AuthContext);
