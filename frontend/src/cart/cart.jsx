@@ -1,17 +1,7 @@
 import React, {useContext} from 'react';
 import { Link } from 'react-router-dom';
 import { CartContext } from './cartProvider';
-
-// --- Reusable Button ---
-export const Button = ({ children, variant = 'primary', ...props }) => {
-    const baseStyle = "px-6 py-2 font-bold uppercase tracking-wider transition-transform duration-200 transform hover:scale-105";
-    const styles = {
-        primary: "bg-accent-gold text-primary-bg",
-        secondary: "bg-white/80 text-primary-bg",
-        danger: "bg-red-500 text-white"
-    };
-    return <button className={`${baseStyle} ${styles[variant]}`} {...props}>{children}</button>;
-};
+import { Button } from '../App';
 
 export const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 

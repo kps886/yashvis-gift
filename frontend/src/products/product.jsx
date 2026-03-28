@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { CartContext } from './../cart/cartProvider';
-import { Button } from './../cart/cart'
+import { Button } from '../App'
 
 const ProductDetailsPage = () => {
     const { id } = useParams();

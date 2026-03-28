@@ -16,18 +16,16 @@ code {
     monospace;
 }
 
-.new-arrival-button{
-  color: white;
+#navbar{
+  position: sticky;
+  top: 0px;
+  z-index: 50;
+  border-bottom: 1px;
 }
 
-.login-from input{
-  color: black;
-}
-
-[data-theme=dark] header{
-  background-color: #222222;
-}
-
-[data-theme=light] header{
-  background-color: white;
+.nav-container{
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
