@@ -2,10 +2,8 @@ import express from 'express';
 const router = express.Router();
 import Product from '../models/Product.js';
 import { protect, shopkeeperAndAbove, employeeAndAbove } from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
-// @desc    Fetch all products (with optional category filter)
-// @route   GET /api/products
-// @access  Public
 router.get('/', async (req, res) => {
     try {
         const filter = {};
@@ -22,9 +20,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @desc    Fetch single product by ID
-// @route   GET /api/products/:id
-// @access  Public
 router.get('/:id', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -38,22 +33,22 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// @desc    Create a new product
-// @route   POST /api/products
-// @access  Private/Shopkeeper+
-router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
-    const { name, description, price, category, images, stock, variations, tags } = req.body;
-
+router.post('/', protect, shopkeeperAndAbove, upload.array('images', 5), async (req, res) => {
     try {
+        const { name, description, price, category, stock, tags } = req.body;
+        
+        const imageUrls = req.files ? req.files.map(file => file.path) : [];
+        
+        const parsedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+
         const product = await Product.create({
             name,
             description,
-            price,
+            price: Number(price),
             category,
-            images: images || [],
-            stock: stock || 0,
-            variations: variations || [],
-            tags: tags || [],
+            images: imageUrls,
+            stock: Number(stock) || 0,
+            tags: parsedTags,
             createdBy: req.user._id,
         });
         res.status(201).json(product);
@@ -62,23 +57,33 @@ router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
     }
 });
 
-// @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Private/Employee+
-router.put('/:id', protect, employeeAndAbove, async (req, res) => {
+router.put('/:id', protect, employeeAndAbove, upload.array('images', 5), async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
 
-        const { name, description, price, category, images, stock, variations, tags } = req.body;
+        const { name, description, price, category, stock, tags, existingImages } = req.body;
+
+        const newImageUrls = req.files ? req.files.map(file => file.path) : [];
+        const parsedExistingImages = existingImages ? JSON.parse(existingImages) : [];
+
+        const combinedImages = [...parsedExistingImages, ...newImageUrls];
+
         if (name !== undefined) product.name = name;
         if (description !== undefined) product.description = description;
-        if (price !== undefined) product.price = price;
+        if (price !== undefined) product.price = Number(price);
         if (category !== undefined) product.category = category;
-        if (images !== undefined) product.images = images;
-        if (stock !== undefined) product.stock = stock;
-        if (variations !== undefined) product.variations = variations;
-        if (tags !== undefined) product.tags = tags;
+        if (stock !== undefined) product.stock = Number(stock);
+        
+        if (tags !== undefined) {
+            product.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+        }
+        
+        if (combinedImages.length > 0) {
+            product.images = combinedImages;
+        } else if (existingImages === "[]" && newImageUrls.length === 0) {
+            product.images = [];
+        }
 
         const updatedProduct = await product.save();
         res.json(updatedProduct);
@@ -87,9 +92,6 @@ router.put('/:id', protect, employeeAndAbove, async (req, res) => {
     }
 });
 
-// @desc    Delete a product
-// @route   DELETE /api/products/:id
-// @access  Private/Shopkeeper+
 router.delete('/:id', protect, shopkeeperAndAbove, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -101,10 +103,6 @@ router.delete('/:id', protect, shopkeeperAndAbove, async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 });
-
-// @desc    Add a review to a product
-// @route   POST /api/products/:id/reviews
-// @access  Private (all logged in users)
 router.post('/:id/reviews', protect, async (req, res) => {
     const { rating, comment } = req.body;
 

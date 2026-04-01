@@ -6,7 +6,7 @@ const CATEGORIES = ['Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games'
 
 const emptyForm = {
     name: '', description: '', price: '', category: 'Electronics',
-    images: '', stock: '', tags: '',
+    images: [], stock: '', tags: '', existingImages: []
 };
 
 const ShopkeeperDashboard = () => {
@@ -22,6 +22,7 @@ const ShopkeeperDashboard = () => {
     const fetchProducts = async () => {
         setLoading(true);
         try {
+            // Note: Make sure to pass your auth token in headers if required by your backend
             const { data } = await axios.get('/api/products');
             setProducts(data);
         } catch {
@@ -46,31 +47,60 @@ const ShopkeeperDashboard = () => {
             description: p.description,
             price: p.price,
             category: p.category,
-            images: p.images.join(', '),
+            // We can't put existing URLs into a file input, so we separate them
+            images: [], 
+            existingImages: p.images || [],
             stock: p.stock,
-            tags: p.tags.join(', '),
+            tags: p.tags ? p.tags.join(', ') : '',
         });
         setShowForm(true);
         setError(''); setSuccess('');
     };
 
+    const handleFileChange = (e) => {
+        // Convert FileList to an array and store in state
+        setForm({ ...form, images: Array.from(e.target.files) });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(''); setSuccess('');
-        const payload = {
-            ...form,
-            price: parseFloat(form.price),
-            stock: parseInt(form.stock),
-            images: form.images.split(',').map(s => s.trim()).filter(Boolean),
-            tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
+
+        // Use FormData to send files + text data
+        const formData = new FormData();
+        formData.append('name', form.name);
+        formData.append('description', form.description);
+        formData.append('price', parseFloat(form.price));
+        formData.append('category', form.category);
+        formData.append('stock', parseInt(form.stock));
+        
+        // Backend will need to split this string back into an array
+        const tagsString = form.tags.split(',').map(s => s.trim()).filter(Boolean).join(',');
+        formData.append('tags', tagsString); 
+
+        // Append new files
+        form.images.forEach((file) => {
+            formData.append('images', file); // 'images' must match your backend Multer configuration
+        });
+
+        // Append existing images so the backend knows what to keep (if editing)
+        if (editingProduct) {
+            formData.append('existingImages', JSON.stringify(form.existingImages));
+        }
+
+        const config = {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${user.token}`
+            }
         };
 
         try {
             if (editingProduct) {
-                await axios.put(`/api/products/${editingProduct._id}`, payload);
+                await axios.put(`/api/products/${editingProduct._id}`, formData, config);
                 setSuccess('Product updated successfully');
             } else {
-                await axios.post('/api/products', payload);
+                await axios.post('/api/products', formData, config);
                 setSuccess('Product created successfully');
             }
             setShowForm(false);
@@ -98,7 +128,7 @@ const ShopkeeperDashboard = () => {
                     <h1 className="text-3xl font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
                         Product Management
                     </h1>
-                    <p className="text-text-secondary mt-1">Welcome, {user.name}</p>
+                    <p className="text-text-secondary mt-1">Welcome, {user?.name}</p>
                 </div>
                 <span className="px-3 py-1 text-xs font-bold border rounded uppercase bg-purple-500/20 text-purple-400 border-purple-500/40">
                     Shopkeeper
@@ -160,10 +190,23 @@ const ShopkeeperDashboard = () => {
                             value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
                             className="md:col-span-2 p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold resize-none"
                         />
-                        <input type="text" placeholder="Image URLs (comma-separated)"
-                            value={form.images} onChange={e => setForm({ ...form, images: e.target.value })}
-                            className="md:col-span-2 p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold"
-                        />
+                        
+                        <div className="md:col-span-2">
+                            <label className="block text-sm text-text-secondary mb-1">Upload Images</label>
+                            <input 
+                                type="file" 
+                                multiple 
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="w-full p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-gold file:text-primary-bg hover:file:bg-yellow-500"
+                            />
+                            {editingProduct && form.existingImages.length > 0 && (
+                                <p className="text-xs text-text-secondary mt-2">
+                                    Current images: {form.existingImages.length} (Uploading new ones will add to or replace these based on your backend logic)
+                                </p>
+                            )}
+                        </div>
+
                         <input type="text" placeholder='Tags e.g. "New Arrival, Bestseller" (comma-separated)'
                             value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })}
                             className="md:col-span-2 p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold"
@@ -199,7 +242,7 @@ const ShopkeeperDashboard = () => {
                                 <tr key={p._id} className="border-b border-border-color hover:bg-secondary-bg/50 transition-colors">
                                     <td className="py-3 px-4">
                                         <div className="flex items-center gap-3">
-                                            {p.images[0] && (
+                                            {p.images && p.images[0] && (
                                                 <img src={p.images[0]} alt={p.name} className="w-10 h-10 object-cover rounded border border-border-color" />
                                             )}
                                             <span className="font-medium">{p.name}</span>
