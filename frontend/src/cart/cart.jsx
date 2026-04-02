@@ -18,9 +18,9 @@ const CartPage = () => {
 
     const handleCheckout = () => {
         if (!isLoggedIn) {
-            navigate('/login', { state: { from: { pathname: '/cart' } } });
+            navigate('/login', { state: { from: { pathname: '/checkout' } } });
         } else {
-            alert('Checkout flow coming soon! (Integrate Razorpay here)');
+            navigate('/checkout');
         }
     };
 
@@ -103,7 +103,7 @@ const CartPage = () => {
                                 onClick={handleCheckout}
                                 className="flex-1 bg-accent-gold text-primary-bg font-bold py-3 uppercase tracking-wider hover:bg-yellow-500 transition-colors"
                             >
-                                {isLoggedIn ? 'Proceed to Checkout' : 'Sign In to Checkout'}
+                                {isLoggedIn ? 'Proceed to Checkout →' : 'Sign In to Checkout'}
                             </button>
                             <button
                                 onClick={clearCart}

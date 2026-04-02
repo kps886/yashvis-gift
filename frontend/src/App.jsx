@@ -10,6 +10,9 @@ import ProductDetailsPage from './products/product';
 import AdminDashboard from './dashboard/AdminDashboard';
 import ShopkeeperDashboard from './dashboard/ShopkeeperDashboard';
 import EmployeeDashboard from './dashboard/EmployeeDashboard';
+import CheckoutPage from './checkout/CheckoutPage';
+import OrderSuccessPage from './orders/OrderSuccessPage';
+import MyOrdersPage from './orders/MyOrdersPage';
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -154,6 +157,15 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                     >
                                         Shop
                                     </Link>
+                                    {user?.role === 'user' && (
+                                        <Link
+                                            to="/my-orders"
+                                            onClick={() => setMenuOpen(false)}
+                                            className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors"
+                                        >
+                                            My Orders
+                                        </Link>
+                                    )}
                                     <button
                                         onClick={handleLogout}
                                         className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-primary-bg transition-colors border-t border-border-color"
@@ -435,6 +447,24 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                 <Route path="/employee" element={
                                     <ProtectedRoute allowedRoles={['admin', 'shopkeeper', 'employee']}>
                                         <EmployeeDashboard />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/checkout" element={
+                                    <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
+                                        <CheckoutPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/order-success/:id" element={
+                                    <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
+                                        <OrderSuccessPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/my-orders" element={
+                                    <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
+                                        <MyOrdersPage />
                                     </ProtectedRoute>
                                 } />
 
