@@ -5,11 +5,13 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import PromoCode from '../models/PromoCode.js';
 import { protect, employeeAndAbove, shopkeeperAndAbove } from '../middleware/authMiddleware.js';
+import User from '../models/User.js';
+import { sendOrderConfirmation, sendStatusUpdate } from '../utils/emailService.js';
 
 const router = express.Router();
 
 const razorpay = new Razorpay({
-    key_id:     process.env.RAZORPAY_KEY_ID,
+    key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
@@ -45,9 +47,9 @@ router.post('/create-payment', protect, async (req, res) => {
             subtotal += product.price * item.quantity;
             verifiedItems.push({
                 product: product._id,
-                name:     product.name,
-                image:    product.images?.[0] || '',
-                price:    product.price,
+                name: product.name,
+                image: product.images?.[0] || '',
+                price: product.price,
                 quantity: item.quantity,
             });
         }
@@ -56,19 +58,19 @@ router.post('/create-payment', protect, async (req, res) => {
         const deliveryFee = Order.calcDeliveryFee(subtotal);
 
         // 3. Promo code (optional)
-        let discount       = 0;
-        let appliedPromo   = null;
+        let discount = 0;
+        let appliedPromo = null;
 
         if (promoCode) {
             const promo = await PromoCode.findOne({ code: promoCode.toUpperCase() });
 
-            if (!promo)                                   return res.status(400).json({ message: 'Invalid promo code' });
-            if (!promo.isActive)                          return res.status(400).json({ message: 'This promo code is no longer active' });
+            if (!promo) return res.status(400).json({ message: 'Invalid promo code' });
+            if (!promo.isActive) return res.status(400).json({ message: 'This promo code is no longer active' });
             if (promo.expiresAt && promo.expiresAt < new Date()) return res.status(400).json({ message: 'This promo code has expired' });
             if (promo.usageLimit && promo.usedCount >= promo.usageLimit) return res.status(400).json({ message: 'Promo code usage limit reached' });
-            if (subtotal < promo.minOrderValue)           return res.status(400).json({ message: `Minimum order value ₹${promo.minOrderValue} required for this code` });
+            if (subtotal < promo.minOrderValue) return res.status(400).json({ message: `Minimum order value ₹${promo.minOrderValue} required for this code` });
 
-            discount     = Math.round(promo.calcDiscount(subtotal));
+            discount = Math.round(promo.calcDiscount(subtotal));
             appliedPromo = promo.code;
         }
 
@@ -77,38 +79,38 @@ router.post('/create-payment', protect, async (req, res) => {
 
         // 5. Create Razorpay order (amount in paise)
         const razorpayOrder = await razorpay.orders.create({
-            amount:   Math.round(total * 100),
+            amount: Math.round(total * 100),
             currency: 'INR',
-            receipt:  `rcpt_${Date.now()}`,
+            receipt: `rcpt_${Date.now()}`,
         });
 
         // 6. Save order to DB in 'pending' state
         const order = await Order.create({
-            user:            req.user._id,
-            items:           verifiedItems,
+            user: req.user._id,
+            items: verifiedItems,
             shippingAddress,
-            subtotal:        Math.round(subtotal),
+            subtotal: Math.round(subtotal),
             deliveryFee,
             discount,
-            total:           Math.round(total),
-            promoCode:       appliedPromo,
-            promoDiscount:   discount,
+            total: Math.round(total),
+            promoCode: appliedPromo,
+            promoDiscount: discount,
             razorpayOrderId: razorpayOrder.id,
-            paymentStatus:   'pending',
-            orderStatus:     'pending',
+            paymentStatus: 'pending',
+            orderStatus: 'pending',
         });
 
         res.status(201).json({
-            orderId:         order._id,
+            orderId: order._id,
             razorpayOrderId: razorpayOrder.id,
-            amount:          razorpayOrder.amount,   // in paise
-            currency:        'INR',
-            keyId:           process.env.RAZORPAY_KEY_ID,
+            amount: razorpayOrder.amount,   // in paise
+            currency: 'INR',
+            keyId: process.env.RAZORPAY_KEY_ID,
             // Summary for the checkout page
             subtotal,
             deliveryFee,
             discount,
-            total:           Math.round(total),
+            total: Math.round(total),
         });
     } catch (err) {
         console.error(err);
@@ -127,8 +129,8 @@ router.post('/verify-payment', protect, async (req, res) => {
 
     try {
         // 1. Verify HMAC signature
-        const body      = razorpayOrderId + '|' + razorpayPaymentId;
-        const expected  = crypto
+        const body = razorpayOrderId + '|' + razorpayPaymentId;
+        const expected = crypto
             .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(body)
             .digest('hex');
@@ -141,12 +143,16 @@ router.post('/verify-payment', protect, async (req, res) => {
         const order = await Order.findById(orderId);
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
-        order.paymentStatus      = 'paid';
-        order.orderStatus        = 'processing';
-        order.razorpayPaymentId  = razorpayPaymentId;
-        order.razorpaySignature  = razorpaySignature;
-        order.paidAt             = new Date();
+        order.paymentStatus = 'paid';
+        order.orderStatus = 'processing';
+        order.razorpayPaymentId = razorpayPaymentId;
+        order.razorpaySignature = razorpaySignature;
+        order.paidAt = new Date();
         await order.save();
+        const buyer = await User.findById(order.user).select('name email');
+        if (buyer) {
+            await sendOrderConfirmation(order, buyer.email, buyer.name);
+        }
 
         // 3. Deduct stock for each item
         for (const item of order.items) {
@@ -233,14 +239,18 @@ router.put('/:id/status', protect, employeeAndAbove, async (req, res) => {
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
         order.orderStatus = orderStatus;
-        if (trackingNumber)        order.trackingNumber = trackingNumber;
+        if (trackingNumber) order.trackingNumber = trackingNumber;
         if (orderStatus === 'delivered') order.deliveredAt = new Date();
         if (orderStatus === 'cancelled') {
-            order.cancelledAt  = new Date();
+            order.cancelledAt = new Date();
             order.cancelReason = req.body.cancelReason || null;
         }
 
         await order.save();
+        const buyer = await User.findById(order.user).select('name email');
+        if (buyer) {
+            await sendStatusUpdate(order, buyer.email, buyer.name);
+        }
         res.json(order);
     } catch (err) {
         res.status(500).json({ message: 'Error updating order status' });

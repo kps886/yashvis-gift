@@ -44,3 +44,21 @@ table {
   border-collapse: collapse;
   width: 100%;
 }
+
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Prevent content jumping behind sticky header ── */
+html {
+  scroll-padding-top: 4.5rem;
+}
+
+/* ── Drawer transition hardware acceleration ── */
+.translate-x-0  { transform: translateX(0); }
+.-translate-x-full { transform: translateX(-100%); }
+
+/* ── Input date picker color fix (dark mode) ── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+}

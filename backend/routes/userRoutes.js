@@ -227,4 +227,78 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
     }
 });
 
+// ── Address management ────────────────────────────────────────
+
+// @desc    Add a new address
+// @route   POST /api/users/addresses
+// @access  Private
+router.post('/addresses', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const { fullName, phone, line1, line2, city, state, pincode, country, isDefault } = req.body;
+
+        // If new address is default, unset all others
+        if (isDefault) {
+            user.addresses.forEach(a => { a.isDefault = false; });
+        }
+
+        // If it's the first address, make it default automatically
+        const makeDefault = isDefault || user.addresses.length === 0;
+
+        user.addresses.push({ fullName, phone, line1, line2, city, state, pincode, country, isDefault: makeDefault });
+        await user.save();
+
+        res.status(201).json(user.addresses);
+    } catch (err) {
+        res.status(500).json({ message: 'Error adding address' });
+    }
+});
+
+// @desc    Set an address as default
+// @route   PUT /api/users/addresses/:addressId/default
+// @access  Private
+router.put('/addresses/:addressId/default', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.addresses.forEach(a => {
+            a.isDefault = a._id.toString() === req.params.addressId;
+        });
+        await user.save();
+
+        res.json(user.addresses);
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating address' });
+    }
+});
+
+// @desc    Delete an address
+// @route   DELETE /api/users/addresses/:addressId
+// @access  Private
+router.delete('/addresses/:addressId', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const idx = user.addresses.findIndex(a => a._id.toString() === req.params.addressId);
+        if (idx === -1) return res.status(404).json({ message: 'Address not found' });
+
+        const wasDefault = user.addresses[idx].isDefault;
+        user.addresses.splice(idx, 1);
+
+        // If deleted address was default, make first remaining address default
+        if (wasDefault && user.addresses.length > 0) {
+            user.addresses[0].isDefault = true;
+        }
+
+        await user.save();
+        res.json(user.addresses);
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting address' });
+    }
+});
+
 export default router;

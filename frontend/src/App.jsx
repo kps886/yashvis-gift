@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
@@ -13,6 +13,7 @@ import EmployeeDashboard from './dashboard/EmployeeDashboard';
 import CheckoutPage from './checkout/CheckoutPage';
 import OrderSuccessPage from './orders/OrderSuccessPage';
 import MyOrdersPage from './orders/MyOrdersPage';
+import ProfilePage from './profile/ProfilePage';
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -53,19 +54,62 @@ const ROLE_COLORS = {
     user: 'bg-green-500/20 text-green-400 border-green-500/40',
 };
 
+// ── Drawer overlay ────────────────────────────────────────────
+const Drawer = ({ open, onClose, children }) => (
+    <>
+        {/* Dark backdrop */}
+        <div
+            onClick={onClose}
+            className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                }`}
+        />
+        {/* Sliding panel */}
+        <div
+            className={`fixed top-0 left-0 h-full w-72 max-w-[85vw] z-50 flex flex-col
+                transition-transform duration-300 ease-in-out
+                ${open ? 'translate-x-0' : '-translate-x-full'}`}
+            style={{ backgroundColor: 'var(--secondary-bg)', borderRight: '1px solid var(--border-color)' }}
+        >
+            {children}
+        </div>
+    </>
+);
+
 // ── Header ────────────────────────────────────────────────────
 const Header = ({ theme, toggleTheme, category, setCategory }) => {
     const { totalItems } = useContext(CartContext);
-    const { user, logout, isLoggedIn, isAdmin, isShopkeeper, isEmployee } = useAuth();
+    const { user, logout, isLoggedIn, isAdmin,
+        isShopkeeper, isEmployee } = useAuth();
     const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [mobileNav, setMobileNav] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef(null);
 
-    const CATEGORIES = ['Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games', 'Home & Kitchen'];
+    const CATEGORIES = [
+        'Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games', 'Home & Kitchen',
+    ];
+
+    // Close user dropdown when clicking outside
+    useEffect(() => {
+        const handler = (e) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+                setUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    // Lock body scroll when drawer is open
+    useEffect(() => {
+        document.body.style.overflow = drawerOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [drawerOpen]);
 
     const handleLogout = () => {
         logout();
-        setMenuOpen(false);
+        setDrawerOpen(false);
+        setUserMenuOpen(false);
         navigate('/login');
     };
 
@@ -76,145 +120,344 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
         return '/';
     };
 
+    const handleCategoryClick = (cat) => {
+        setCategory(cat);
+        setDrawerOpen(false);
+        navigate('/');
+    };
+
     return (
-        <header className="bg-secondary-bg text-text-primary border-b border-border-color sticky top-0 z-50">
-            <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
-                {/* Logo */}
-                <Link to="/" className="text-3xl font-serif text-accent-gold flex-shrink-0" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    Charming
-                </Link>
+        <>
+            {/* ── Top bar ── */}
+            <header
+                className="sticky top-0 z-30"
+                style={{
+                    backgroundColor: 'var(--secondary-bg)',
+                    borderBottom: '1px solid var(--border-color)',
+                }}
+            >
+                <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
-                {/* Desktop Category Nav */}
-                <nav className="hidden md:flex items-center gap-1 flex-wrap">
+                    {/* Hamburger (mobile only) */}
                     <button
-                        onClick={() => setCategory('')}
-                        className={`px-3 py-1.5 text-sm font-semibold transition-colors ${category === '' ? 'text-accent-gold' : 'text-text-secondary hover:text-text-primary'}`}
+                        onClick={() => setDrawerOpen(true)}
+                        className="md:hidden p-2 -ml-2 hover:text-accent-gold transition-colors"
+                        aria-label="Open menu"
                     >
-                        All
-                    </button>
-                    {CATEGORIES.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setCategory(cat)}
-                            className={`px-3 py-1.5 text-sm font-semibold transition-colors whitespace-nowrap ${category === cat ? 'text-accent-gold border-b border-accent-gold' : 'text-text-secondary hover:text-text-primary'}`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </nav>
-
-                {/* Right controls */}
-                <div className="flex items-center gap-3">
-                    <button onClick={toggleTheme} className="p-1 hover:text-accent-gold transition-colors">
-                        {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-                    </button>
-
-                    {/* Cart (only for regular users) */}
-                    {(!isLoggedIn || user?.role === 'user') && (
-                        <Link to="/cart" className="relative hover:text-accent-gold transition-colors p-1">
-                            <CartIcon />
-                            {totalItems > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-accent-gold text-primary-bg text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                                    {totalItems > 9 ? '9+' : totalItems}
-                                </span>
-                            )}
-                        </Link>
-                    )}
-
-                    {/* User Menu */}
-                    {isLoggedIn ? (
-                        <div className="relative">
-                            <button
-                                onClick={() => setMenuOpen(!menuOpen)}
-                                className="flex items-center gap-2 hover:text-accent-gold transition-colors p-1"
-                            >
-                                <UserIcon />
-                                <span className="hidden sm:block text-sm font-semibold max-w-[100px] truncate">{user.name}</span>
-                                <span className={`hidden sm:block px-2 py-0.5 text-xs font-bold border rounded uppercase ${ROLE_COLORS[user.role]}`}>
-                                    {user.role}
-                                </span>
-                            </button>
-
-                            {menuOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-52 bg-secondary-bg border border-border-color shadow-xl z-50">
-                                    <div className="p-3 border-b border-border-color">
-                                        <p className="font-semibold text-sm truncate">{user.name}</p>
-                                        <p className="text-xs text-text-secondary truncate">{user.email}</p>
-                                    </div>
-                                    {(isAdmin || isShopkeeper || isEmployee) && (
-                                        <Link
-                                            to={getDashboardPath()}
-                                            onClick={() => setMenuOpen(false)}
-                                            className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors"
-                                        >
-                                            Dashboard
-                                        </Link>
-                                    )}
-                                    <Link
-                                        to="/"
-                                        onClick={() => setMenuOpen(false)}
-                                        className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors"
-                                    >
-                                        Shop
-                                    </Link>
-                                    {user?.role === 'user' && (
-                                        <Link
-                                            to="/my-orders"
-                                            onClick={() => setMenuOpen(false)}
-                                            className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors"
-                                        >
-                                            My Orders
-                                        </Link>
-                                    )}
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-primary-bg transition-colors border-t border-border-color"
-                                    >
-                                        Sign Out
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Link
-                            to="/login"
-                            className="flex items-center gap-2 hover:text-accent-gold transition-colors p-1"
-                        >
-                            <UserIcon />
-                            <span className="hidden sm:block text-sm font-semibold">Sign In</span>
-                        </Link>
-                    )}
-
-                    {/* Mobile nav toggle */}
-                    <button onClick={() => setMobileNav(!mobileNav)} className="md:hidden p-1 hover:text-accent-gold transition-colors">
                         <MenuIcon />
                     </button>
-                </div>
-            </div>
 
-            {/* Mobile Category Nav */}
-            {mobileNav && (
-                <div className="md:hidden border-t border-border-color bg-secondary-bg">
-                    <div className="container mx-auto px-4 py-2 flex flex-wrap gap-1">
+                    {/* Logo */}
+                    <Link
+                        to="/"
+                        className="text-2xl md:text-3xl font-serif text-accent-gold flex-shrink-0"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                        Charming
+                    </Link>
+
+                    {/* Desktop category nav */}
+                    <nav className="hidden md:flex items-center gap-1 flex-1 justify-center flex-wrap">
                         <button
-                            onClick={() => { setCategory(''); setMobileNav(false); }}
-                            className={`px-3 py-1.5 text-sm font-semibold transition-colors ${category === '' ? 'text-accent-gold' : 'text-text-secondary'}`}
+                            onClick={() => handleCategoryClick('')}
+                            className={`px-3 py-1.5 text-sm font-semibold transition-colors rounded ${category === ''
+                                ? 'text-accent-gold'
+                                : 'text-text-secondary hover:text-text-primary'
+                                }`}
                         >
                             All
                         </button>
-                        {['Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games', 'Home & Kitchen'].map(cat => (
+                        {CATEGORIES.map(cat => (
                             <button
                                 key={cat}
-                                onClick={() => { setCategory(cat); setMobileNav(false); }}
-                                className={`px-3 py-1.5 text-sm font-semibold transition-colors ${category === cat ? 'text-accent-gold' : 'text-text-secondary'}`}
+                                onClick={() => handleCategoryClick(cat)}
+                                className={`px-3 py-1.5 text-sm font-semibold transition-colors rounded whitespace-nowrap ${category === cat
+                                    ? 'text-accent-gold underline underline-offset-4'
+                                    : 'text-text-secondary hover:text-text-primary'
+                                    }`}
                             >
                                 {cat}
                             </button>
                         ))}
+                    </nav>
+
+                    {/* Right controls */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Theme toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 hover:text-accent-gold transition-colors"
+                            aria-label="Toggle theme"
+                        >
+                            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+                        </button>
+
+                        {/* Cart — only for end users (or logged out) */}
+                        {(!isLoggedIn || user?.role === 'user') && (
+                            <Link
+                                to="/cart"
+                                className="relative p-2 hover:text-accent-gold transition-colors"
+                                aria-label="Cart"
+                            >
+                                <CartIcon />
+                                {totalItems > 0 && (
+                                    <span className="absolute top-0 right-0 bg-accent-gold text-primary-bg
+                                        text-xs font-bold rounded-full w-4 h-4 flex items-center
+                                        justify-center leading-none">
+                                        {totalItems > 9 ? '9+' : totalItems}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
+
+                        {/* User menu (desktop) */}
+                        {isLoggedIn ? (
+                            <div className="relative" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setUserMenuOpen(o => !o)}
+                                    className="flex items-center gap-2 p-2 hover:text-accent-gold transition-colors"
+                                >
+                                    <UserIcon />
+                                    <span className="hidden sm:block text-sm font-semibold max-w-[90px] truncate">
+                                        {user.name}
+                                    </span>
+                                    {/* Role chip — desktop only */}
+                                    <span className={`hidden lg:block px-2 py-0.5 text-xs font-bold
+                                        border rounded uppercase ${ROLE_COLORS[user.role]}`}>
+                                        {user.role}
+                                    </span>
+                                </button>
+
+                                {/* Dropdown */}
+                                {userMenuOpen && (
+                                    <div
+                                        className="absolute right-0 top-full mt-1 w-52 shadow-xl z-50"
+                                        style={{
+                                            backgroundColor: 'var(--secondary-bg)',
+                                            border: '1px solid var(--border-color)',
+                                        }}
+                                    >
+                                        <div className="p-3 border-b border-border-color">
+                                            <p className="font-semibold text-sm truncate">{user.name}</p>
+                                            <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                                            <span className={`inline-block mt-1 px-2 py-0.5 text-xs
+                                                font-bold border rounded uppercase ${ROLE_COLORS[user.role]}`}>
+                                                {user.role}
+                                            </span>
+                                        </div>
+                                        {(isAdmin || isShopkeeper || isEmployee) && (
+                                            <Link
+                                                to={getDashboardPath()}
+                                                onClick={() => setUserMenuOpen(false)}
+                                                className="block px-4 py-2.5 text-sm hover:bg-primary-bg
+                                                    hover:text-accent-gold transition-colors"
+                                            >
+                                                Dashboard
+                                            </Link>
+                                        )}
+                                        <Link
+                                            to="/"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="block px-4 py-2.5 text-sm hover:bg-primary-bg
+                                                hover:text-accent-gold transition-colors"
+                                        >
+                                            Shop
+                                        </Link>
+                                        {user?.role === 'user' && (
+                                            <Link
+                                                to="/my-orders"
+                                                onClick={() => setUserMenuOpen(false)}
+                                                className="block px-4 py-2.5 text-sm hover:bg-primary-bg
+                                                    hover:text-accent-gold transition-colors"
+                                            >
+                                                My Orders
+                                            </Link>
+                                        )}
+                                        <Link
+                                            to="/profile"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors"
+                                        >
+                                            My Profile
+                                        </Link>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-red-400
+                                                hover:bg-primary-bg transition-colors border-t border-border-color"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="flex items-center gap-2 p-2 hover:text-accent-gold transition-colors"
+                            >
+                                <UserIcon />
+                                <span className="hidden sm:block text-sm font-semibold">Sign In</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
-            )}
-        </header>
+            </header>
+
+            {/* ── Mobile sliding drawer ── */}
+            <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                {/* Drawer header */}
+                <div
+                    className="flex items-center justify-between px-5 h-16 flex-shrink-0"
+                    style={{ borderBottom: '1px solid var(--border-color)' }}
+                >
+                    <span
+                        className="text-xl font-serif text-accent-gold"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                        Charming
+                    </span>
+                    <button
+                        onClick={() => setDrawerOpen(false)}
+                        className="p-2 hover:text-accent-gold transition-colors text-xl leading-none"
+                        aria-label="Close menu"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                {/* User info strip */}
+                {isLoggedIn && (
+                    <div
+                        className="px-5 py-4 flex-shrink-0"
+                        style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--primary-bg)' }}
+                    >
+                        <p className="font-semibold text-sm truncate">{user.name}</p>
+                        <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-bold
+                            border rounded uppercase ${ROLE_COLORS[user.role]}`}>
+                            {user.role}
+                        </span>
+                    </div>
+                )}
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* Categories */}
+                    <div className="px-5 py-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-3">
+                            Shop by Category
+                        </p>
+                        <div className="space-y-1">
+                            {['', ...CATEGORIES].map(cat => (
+                                <button
+                                    key={cat || 'all'}
+                                    onClick={() => handleCategoryClick(cat)}
+                                    className={`w-full text-left px-3 py-2.5 rounded text-sm font-semibold
+                                        transition-colors ${category === cat
+                                            ? 'bg-accent-gold text-primary-bg'
+                                            : 'hover:bg-primary-bg text-text-primary'
+                                        }`}
+                                >
+                                    {cat || 'All Products'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Nav links */}
+                    <div
+                        className="px-5 py-4"
+                        style={{ borderTop: '1px solid var(--border-color)' }}
+                    >
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-3">
+                            Account
+                        </p>
+                        <div className="space-y-1">
+                            {isLoggedIn ? (
+                                <>
+                                    {(isAdmin || isShopkeeper || isEmployee) && (
+                                        <Link
+                                            to={getDashboardPath()}
+                                            onClick={() => setDrawerOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded text-sm
+                                                font-semibold hover:bg-primary-bg transition-colors"
+                                        >
+                                            Dashboard
+                                        </Link>
+                                    )}
+                                    {user?.role === 'user' && (
+                                        <>
+                                            <Link
+                                                to="/cart"
+                                                onClick={() => setDrawerOpen(false)}
+                                                className="flex items-center justify-between px-3 py-2.5
+                                                    rounded text-sm font-semibold hover:bg-primary-bg transition-colors"
+                                            >
+                                                <span>My Bag</span>
+                                                {totalItems > 0 && (
+                                                    <span className="bg-accent-gold text-primary-bg text-xs
+                                                        font-bold rounded-full px-2 py-0.5">
+                                                        {totalItems}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                            <Link
+                                                to="/my-orders"
+                                                onClick={() => setDrawerOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded
+                                                    text-sm font-semibold hover:bg-primary-bg transition-colors"
+                                            >
+                                                My Orders
+                                            </Link>
+                                            <Link
+                                                to="/profile"
+                                                onClick={() => setDrawerOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors"
+                                            >
+                                                My Profile
+                                            </Link>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <Link
+                                    to="/login"
+                                    onClick={() => setDrawerOpen(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded text-sm
+                                        font-semibold hover:bg-primary-bg transition-colors text-accent-gold"
+                                >
+                                    Sign In / Register
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Drawer footer */}
+                <div
+                    className="px-5 py-4 flex-shrink-0 space-y-3"
+                    style={{ borderTop: '1px solid var(--border-color)' }}
+                >
+                    <button
+                        onClick={() => { toggleTheme(); }}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-sm
+                            font-semibold hover:bg-primary-bg transition-colors"
+                    >
+                        {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                    {isLoggedIn && (
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-sm
+                                font-semibold text-red-400 hover:bg-primary-bg transition-colors"
+                        >
+                            Sign Out
+                        </button>
+                    )}
+                </div>
+            </Drawer>
+        </>
     );
 };
 
@@ -248,55 +491,128 @@ const ProductCard = ({ product }) => (
 );
 
 // ── Homepage ──────────────────────────────────────────────────
-const HomePage = ({ products, loading, error, category }) => {
-    const filtered = category ? products.filter(p => p.category === category) : products;
+const HomePage = ({ products, loading, error, category, search, setSearch }) => {
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+    // Debounce: only filter 300ms after user stops typing
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 300);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const filtered = products.filter(p => {
+        const matchCat = !category || p.category === category;
+        const matchSearch = !debouncedSearch ||
+            p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            p.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            p.category.toLowerCase().includes(debouncedSearch.toLowerCase());
+        return matchCat && matchSearch;
+    });
 
     return (
         <div>
-            {/* Hero — only shown when no category selected */}
-            {!category && (
-                <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center text-center px-4">
+            {/* Hero — only when no filter active */}
+            {!category && !search && (
+                <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
+                    flex items-center justify-center text-center px-4">
                     <div>
-                        <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg"
+                            style={{ fontFamily: "'Playfair Display', serif" }}>
                             Discover Your Charm
                         </h1>
-                        <p className="text-xl text-gray-300 mt-4">Curated collections of luxury and style.</p>
-                        <Link
-                            to="/"
-                            className="mt-8 inline-block bg-accent-gold text-primary-bg px-8 py-3 font-bold uppercase tracking-wider hover:bg-yellow-500 transition-colors"
-                        >
+                        <p className="text-xl text-gray-300 mt-4">
+                            Curated collections of luxury and style.
+                        </p>
+                        <Link to="/"
+                            className="mt-8 inline-block bg-accent-gold text-primary-bg px-8 py-3
+                                font-bold uppercase tracking-wider hover:bg-yellow-500 transition-colors">
                             Shop New Arrivals
                         </Link>
                     </div>
                 </section>
             )}
 
-            <section className="container mx-auto py-12 px-4">
-                <h2 className="text-3xl text-center font-serif mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {category || 'All Products'}
-                </h2>
-                {category && (
-                    <p className="text-center text-text-secondary mb-8">{filtered.length} product{filtered.length !== 1 ? 's' : ''} found</p>
-                )}
+            <section className="container mx-auto py-10 px-4">
+                {/* Search bar */}
+                <div className="relative max-w-xl mx-auto mb-8">
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4
+                        text-text-secondary pointer-events-none"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <path strokeLinecap="round" strokeLinejoin="round"
+                            strokeWidth={2} d="M21 21l-4.35-4.35" />
+                    </svg>
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search products..."
+                        className="w-full pl-11 pr-10 py-3 bg-secondary-bg border border-border-color
+                            rounded-full focus:outline-none focus:border-accent-gold transition-colors
+                            text-sm"
+                    />
+                    {search && (
+                        <button
+                            onClick={() => setSearch('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2
+                                text-text-secondary hover:text-text-primary transition-colors
+                                text-lg leading-none"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+
+                {/* Heading */}
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-serif"
+                        style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {search
+                            ? `Results for "${search}"`
+                            : category || 'All Products'}
+                    </h2>
+                    {(search || category) && (
+                        <button
+                            onClick={() => { setSearch(''); }}
+                            className="text-xs text-text-secondary hover:text-accent-gold
+                                transition-colors underline"
+                        >
+                            Clear filters
+                        </button>
+                    )}
+                    <p className="text-sm text-text-secondary">
+                        {filtered.length} product{filtered.length !== 1 ? 's' : ''}
+                    </p>
+                </div>
 
                 {loading && (
                     <div className="text-center py-16">
-                        <div className="inline-block w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin mb-4" />
+                        <div className="inline-block w-8 h-8 border-2 border-accent-gold
+                            border-t-transparent rounded-full animate-spin mb-4" />
                         <p className="text-text-secondary">Loading products...</p>
                     </div>
                 )}
                 {error && (
                     <div className="text-center py-16">
                         <p className="text-red-400 mb-2">{error}</p>
-                        <p className="text-text-secondary text-sm">Make sure the backend server is running.</p>
+                        <p className="text-text-secondary text-sm">
+                            Make sure the backend server is running.
+                        </p>
+                    </div>
+                )}
+                {!loading && !error && filtered.length === 0 && (
+                    <div className="text-center py-16">
+                        <p className="text-text-secondary text-lg mb-2">No products found.</p>
+                        <button
+                            onClick={() => setSearch('')}
+                            className="text-accent-gold text-sm hover:underline"
+                        >
+                            Clear search
+                        </button>
                     </div>
                 )}
 
-                {!loading && !error && filtered.length === 0 && (
-                    <p className="text-center py-16 text-text-secondary">No products found in this category.</p>
-                )}
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                     {filtered.map(product => (
                         <ProductCard key={product._id} product={product} />
                     ))}
@@ -313,6 +629,7 @@ export default function App() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [category, setCategory] = useState('');
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -400,6 +717,8 @@ export default function App() {
                         error={error}
                         category={category}
                         setCategory={setCategory}
+                        search={search}
+                        setSearch={setSearch}
                     />
                 </Router>
             </CartProvider>
@@ -408,7 +727,7 @@ export default function App() {
 }
 
 // Separate so we can use useNavigate inside Router context
-function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory }) {
+function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch}) {
     const { isLoggedIn } = useAuth();
 
     return (
@@ -424,7 +743,13 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                         <main className="flex-grow">
                             <Routes>
                                 <Route path="/" element={
-                                    <HomePage products={products} loading={loading} error={error} category={category} />
+                                    <HomePage
+                                        products={products}
+                                        loading={loading}
+                                        error={error}
+                                        category={category}
+                                        search={search}
+                                        setSearch={setSearch} />
                                 } />
                                 <Route path="/cart" element={<CartPage />} />
                                 <Route path="/product/:id" element={<ProductDetailsPage />} />
@@ -465,6 +790,12 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                 <Route path="/my-orders" element={
                                     <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
                                         <MyOrdersPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/profile" element={
+                                    <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
+                                        <ProfilePage />
                                     </ProtectedRoute>
                                 } />
 
