@@ -48,7 +48,6 @@ const inputCls = (err) =>
 
 // ─────────────────────────────────────────────────────────────
 const ProfilePage = () => {
-    const { user, login } = useAuth();
 
     // ── Profile form ──────────────────────────────────────────
     const [profile, setProfile]           = useState({ name: '', email: '' });

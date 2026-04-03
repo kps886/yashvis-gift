@@ -15,7 +15,6 @@ const StarIcon = ({ filled }) => (
 const ProductDetailsPage = () => {
     const { id } = useParams();
     const { addToCart } = useContext(CartContext);
-    const { isLoggedIn } = useAuth();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [added, setAdded] = useState(false);

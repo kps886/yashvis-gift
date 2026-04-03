@@ -728,7 +728,6 @@ export default function App() {
 
 // Separate so we can use useNavigate inside Router context
 function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch}) {
-    const { isLoggedIn } = useAuth();
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--primary-bg)', color: 'var(--text-primary)' }}>
