@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { CartContext } from '../cart/cartProvider';
-import { useAuth } from '../auth/AuthContext';
 
 const StarIcon = ({ filled }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"

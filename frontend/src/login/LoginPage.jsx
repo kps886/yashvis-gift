@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 const LoginPage = () => {
@@ -9,7 +9,6 @@ const LoginPage = () => {
 
     const { login, register, loading, authError, setAuthError, isLoggedIn, user } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // If already logged in, redirect
     useEffect(() => {

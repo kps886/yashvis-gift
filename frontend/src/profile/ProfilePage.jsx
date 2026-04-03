@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../auth/AuthContext';
 
 const INDIAN_STATES = [
     'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh',
