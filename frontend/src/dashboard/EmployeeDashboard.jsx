@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './../api';
 import { useAuth } from '../auth/AuthContext';
 
 const EmployeeDashboard = () => {
@@ -14,7 +14,7 @@ const EmployeeDashboard = () => {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/products');
+            const { data } = await api.get('/api/products');
             setProducts(data);
         } catch {
             setError('Failed to fetch products');
@@ -27,7 +27,7 @@ const EmployeeDashboard = () => {
     const handleUpdateStock = async (productId) => {
         setError(''); setSuccess('');
         try {
-            await axios.put(`/api/products/${productId}`, { stock: parseInt(stockEdit) });
+            await api.put(`/api/products/${productId}`, { stock: parseInt(stockEdit) });
             setSuccess('Stock updated successfully');
             setEditingId(null);
             fetchProducts();

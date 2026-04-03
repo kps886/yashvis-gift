@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 const STATUS_STYLES = {
     pending:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
@@ -55,7 +55,7 @@ const MyOrdersPage = () => {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const { data } = await axios.get('/api/orders/my');
+                const { data } = await api.get('/api/orders/my');
                 setOrders(data);
             } catch {
                 // handle silently

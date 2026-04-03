@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from './../api'
 
 export const AuthContext = createContext();
 
@@ -11,12 +11,12 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [authError, setAuthError] = useState(null);
 
-    // Set axios default auth header whenever user changes
+    // Set api default auth header whenever user changes
     useEffect(() => {
         if (user?.token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            api.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
         } else {
-            delete axios.defaults.headers.common['Authorization'];
+            delete api.defaults.headers.common['Authorization'];
         }
     }, [user]);
 
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setAuthError(null);
         try {
-            const { data } = await axios.post('/api/users/login', { email, password });
+            const { data } = await api.post('/api/users/login', { email, password });
             setUser(data);
             localStorage.setItem('charmingUser', JSON.stringify(data));
             setLoading(false);
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setAuthError(null);
         try {
-            const { data } = await axios.post('/api/users/register', { name, email, password });
+            const { data } = await api.post('/api/users/register', { name, email, password });
             setUser(data);
             localStorage.setItem('charmingUser', JSON.stringify(data));
             setLoading(false);
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         localStorage.removeItem('charmingUser');
         localStorage.removeItem('cart');
-        delete axios.defaults.headers.common['Authorization'];
+        delete api.defaults.headers.common['Authorization'];
     };
 
     // Role helpers

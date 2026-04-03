@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
-import axios from 'axios';
+import api from './api'
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { CartProvider, CartContext } from './cart/cartProvider';
@@ -647,7 +647,7 @@ export default function App() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const { data } = await axios.get('/api/products');
+                const { data } = await api.get('/api/products');
                 setProducts(data);
             } catch (err) {
                 setError('Failed to connect to backend.');

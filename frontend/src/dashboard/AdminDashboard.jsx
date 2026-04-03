@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './../api';
 import { useAuth } from '../auth/AuthContext';
 
 const ROLE_BADGE = {
@@ -62,7 +62,7 @@ const UsersPanel = ({ currentUserId }) => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/users');
+            const { data } = await api.get('/api/users');
             setUsers(data);
         } catch { setError('Failed to load users'); }
         setLoading(false);
@@ -73,7 +73,7 @@ const UsersPanel = ({ currentUserId }) => {
         e.preventDefault();
         setError(''); setSuccess('');
         try {
-            await axios.post('/api/users/create', newUser);
+            await api.post('/api/users/create', newUser);
             setSuccess(`User "${newUser.name}" created as ${newUser.role}`);
             setNewUser({ name: '', email: '', password: '', role: 'employee' });
             setShowForm(false);
@@ -83,7 +83,7 @@ const UsersPanel = ({ currentUserId }) => {
 
     const handleToggle = async (u) => {
         try {
-            await axios.put(`/api/users/${u._id}`, { isActive: !u.isActive });
+            await api.put(`/api/users/${u._id}`, { isActive: !u.isActive });
             fetchUsers();
         } catch { setError('Failed to update user'); }
     };
@@ -91,7 +91,7 @@ const UsersPanel = ({ currentUserId }) => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Delete "${name}"?`)) return;
         try {
-            await axios.delete(`/api/users/${id}`);
+            await api.delete(`/api/users/${id}`);
             fetchUsers();
         } catch (err) { setError(err.response?.data?.message || 'Failed to delete'); }
     };
@@ -232,7 +232,7 @@ const OrdersPanel = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/orders');
+            const { data } = await api.get('/api/orders');
             setOrders(data);
         } catch { setError('Failed to load orders'); }
         setLoading(false);
@@ -245,7 +245,7 @@ const OrdersPanel = () => {
         setUpdating(orderId);
         setError(''); setSuccess('');
         try {
-            await axios.put(`/api/orders/${orderId}/status`, {
+            await api.put(`/api/orders/${orderId}/status`, {
                 orderStatus:    edit.status,
                 trackingNumber: edit.tracking || undefined,
             });
@@ -481,7 +481,7 @@ const PromoPanel = () => {
     const fetchPromos = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/promo');
+            const { data } = await api.get('/api/promo');
             setPromos(data);
         } catch { setError('Failed to load promo codes'); }
         setLoading(false);
@@ -500,7 +500,7 @@ const PromoPanel = () => {
             expiresAt:        form.expiresAt || null,
         };
         try {
-            await axios.post('/api/promo', payload);
+            await api.post('/api/promo', payload);
             setSuccess(`Promo code "${form.code}" created`);
             setForm({
                 code: '', discountType: 'flat', discountValue: '',
@@ -514,7 +514,7 @@ const PromoPanel = () => {
 
     const handleToggle = async (p) => {
         try {
-            await axios.put(`/api/promo/${p._id}`, { isActive: !p.isActive });
+            await api.put(`/api/promo/${p._id}`, { isActive: !p.isActive });
             fetchPromos();
         } catch { setError('Failed to update'); }
     };
@@ -522,7 +522,7 @@ const PromoPanel = () => {
     const handleDelete = async (id, code) => {
         if (!window.confirm(`Delete promo code "${code}"?`)) return;
         try {
-            await axios.delete(`/api/promo/${id}`);
+            await api.delete(`/api/promo/${id}`);
             fetchPromos();
         } catch { setError('Failed to delete'); }
     };
@@ -700,7 +700,7 @@ const ProductsPanel = () => {
     const [error, setError]       = useState('');
 
     useEffect(() => {
-        axios.get('/api/products')
+        api.get('/api/products')
             .then(r => { setProducts(r.data); setLoading(false); })
             .catch(() => { setError('Failed to load'); setLoading(false); });
     }, []);
@@ -708,7 +708,7 @@ const ProductsPanel = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Delete "${name}"?`)) return;
         try {
-            await axios.delete(`/api/products/${id}`);
+            await api.delete(`/api/products/${id}`);
             setProducts(p => p.filter(x => x._id !== id));
         } catch { setError('Failed to delete'); }
     };
@@ -773,10 +773,10 @@ const AdminDashboard = () => {
         const load = async () => {
             try {
                 const [u, o, p, pr] = await Promise.all([
-                    axios.get('/api/users'),
-                    axios.get('/api/orders'),
-                    axios.get('/api/products'),
-                    axios.get('/api/promo'),
+                    api.get('/api/users'),
+                    api.get('/api/orders'),
+                    api.get('/api/products'),
+                    api.get('/api/promo'),
                 ]);
                 setCounts({
                     users:    u.data.length,

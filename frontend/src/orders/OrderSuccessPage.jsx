@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 const OrderSuccessPage = () => {
     const { id } = useParams();
@@ -9,7 +9,7 @@ const OrderSuccessPage = () => {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const { data } = await axios.get(`/api/orders/${id}`);
+                const { data } = await api.get(`/api/orders/${id}`);
                 setOrder(data);
             } catch {
                 // silently fail — user still sees success UI

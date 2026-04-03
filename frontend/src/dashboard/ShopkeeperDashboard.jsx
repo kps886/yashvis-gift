@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useAuth } from '../auth/AuthContext';
 
 const CATEGORIES = ['Electronics','Fragrances','Bags & Purses','Toys & Games','Home & Kitchen'];
@@ -51,7 +51,7 @@ const OrdersPanel = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/orders');
+            const { data } = await api.get('/api/orders');
             setOrders(data);
         } catch { setError('Failed to load orders'); }
         setLoading(false);
@@ -63,7 +63,7 @@ const OrdersPanel = () => {
         if (!edit?.status) return;
         setUpdating(orderId); setError(''); setSuccess('');
         try {
-            await axios.put(`/api/orders/${orderId}/status`, {
+            await api.put(`/api/orders/${orderId}/status`, {
                 orderStatus:    edit.status,
                 trackingNumber: edit.tracking || undefined,
             });
@@ -240,7 +240,7 @@ const ProductsPanel = ({ user }) => {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get('/api/products');
+            const { data } = await api.get('/api/products');
             setProducts(data);
         } catch { setError('Failed to fetch products'); }
         setLoading(false);
@@ -270,11 +270,11 @@ const ProductsPanel = ({ user }) => {
 
         try {
             if (editingProduct) {
-                await axios.put(`/api/products/${editingProduct._id}`, formData,
+                await api.put(`/api/products/${editingProduct._id}`, formData,
                     { headers: { 'Content-Type': 'multipart/form-data' } });
                 setSuccess('Product updated');
             } else {
-                await axios.post('/api/products', formData,
+                await api.post('/api/products', formData,
                     { headers: { 'Content-Type': 'multipart/form-data' } });
                 setSuccess('Product created');
             }
@@ -284,7 +284,7 @@ const ProductsPanel = ({ user }) => {
 
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Delete "${name}"?`)) return;
-        try { await axios.delete(`/api/products/${id}`); fetchProducts(); }
+        try { await api.delete(`/api/products/${id}`); fetchProducts(); }
         catch { setError('Failed to delete product'); }
     };
 
@@ -424,7 +424,7 @@ const ShopkeeperDashboard = () => {
 
     const [counts, setCounts] = useState({ products: 0, orders: 0, pending: 0, outOfStock: 0 });
     useEffect(() => {
-        Promise.all([axios.get('/api/products'), axios.get('/api/orders')]).then(([p, o]) => {
+        Promise.all([api.get('/api/products'), api.get('/api/orders')]).then(([p, o]) => {
             setCounts({
                 products:   p.data.length,
                 orders:     o.data.length,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const INDIAN_STATES = [
     'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh',
@@ -68,7 +68,7 @@ const ProfilePage = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const { data } = await axios.get('/api/users/profile');
+                const { data } = await api.get('/api/users/profile');
                 setProfile({ name: data.name, email: data.email });
                 setAddresses(data.addresses || []);
             } catch { /* silent */ }
@@ -98,7 +98,7 @@ const ProfilePage = () => {
         try {
             const payload = { name: profile.name, email: profile.email };
             if (passwords.next) payload.password = passwords.next;
-            const { data } = await axios.put('/api/users/profile', payload);
+            const { data } = await api.put('/api/users/profile', payload);
             setProfileMsg({ type: 'success', text: 'Profile updated successfully' });
             setPasswords({ current: '', next: '', confirm: '' });
             // refresh token in auth context
@@ -132,7 +132,7 @@ const ProfilePage = () => {
         setAddrSaving(true);
         setAddrMsg({ type: '', text: '' });
         try {
-            const { data } = await axios.post('/api/users/addresses', addrForm);
+            const { data } = await api.post('/api/users/addresses', addrForm);
             setAddresses(data);
             setAddrForm(emptyAddress);
             setShowAddrForm(false);
@@ -148,7 +148,7 @@ const ProfilePage = () => {
 
     const handleSetDefault = async (id) => {
         try {
-            const { data } = await axios.put(`/api/users/addresses/${id}/default`);
+            const { data } = await api.put(`/api/users/addresses/${id}/default`);
             setAddresses(data);
         } catch {
             setAddrMsg({ type: 'error', text: 'Failed to update default address' });
@@ -158,7 +158,7 @@ const ProfilePage = () => {
     const handleDeleteAddress = async (id) => {
         if (!window.confirm('Delete this address?')) return;
         try {
-            const { data } = await axios.delete(`/api/users/addresses/${id}`);
+            const { data } = await api.delete(`/api/users/addresses/${id}`);
             setAddresses(data);
             setAddrMsg({ type: 'success', text: 'Address deleted' });
         } catch {

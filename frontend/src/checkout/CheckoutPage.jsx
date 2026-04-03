@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from './../api'
 import { CartContext } from '../cart/cartProvider';
 import { useAuth } from '../auth/AuthContext';
 
@@ -185,7 +185,7 @@ const CheckoutPage = () => {
     useEffect(() => {
         const fetchAddresses = async () => {
             try {
-                const { data } = await axios.get('/api/users/profile');
+                const { data } = await api.get('/api/users/profile');
                 if (data.addresses?.length > 0) {
                     setSavedAddresses(data.addresses);
                     setAddress(data.addresses.find(a => a.isDefault) || data.addresses[0]);
@@ -226,7 +226,7 @@ const CheckoutPage = () => {
         setPromoError('');
         setPromoResult(null);
         try {
-            const { data } = await axios.post('/api/promo/validate', {
+            const { data } = await api.post('/api/promo/validate', {
                 code: promoInput.trim(),
                 subtotal,
             });
@@ -258,7 +258,7 @@ const CheckoutPage = () => {
 
         try {
             // 2. Create order on backend — get razorpayOrderId
-            const { data } = await axios.post('/api/orders/create-payment', {
+            const { data } = await api.post('/api/orders/create-payment', {
                 items: cartItems.map(item => ({
                     product:  item._id,
                     quantity: item.qty,
@@ -285,7 +285,7 @@ const CheckoutPage = () => {
                 handler: async (response) => {
                     // 4. Payment success — verify on backend
                     try {
-                        await axios.post('/api/orders/verify-payment', {
+                        await api.post('/api/orders/verify-payment', {
                             orderId:           data.orderId,
                             razorpayOrderId:   response.razorpay_order_id,
                             razorpayPaymentId: response.razorpay_payment_id,

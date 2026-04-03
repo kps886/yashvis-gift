@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { CartContext } from '../cart/cartProvider';
 
 const StarIcon = ({ filled }) => (
@@ -22,7 +22,7 @@ const ProductDetailsPage = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const { data } = await axios.get(`/api/products/${id}`);
+                const { data } = await api.get(`/api/products/${id}`);
                 setProduct(data);
             } catch (error) {
                 console.error(error);
