@@ -71,7 +71,7 @@ router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
     });
 });
 
-router.put('/:id', protect, employeeAndAbove, upload.array('images', 5), async (req, res) => {
+router.put('/:id', protect, employeeAndAbove, async (req, res) => {
     const uploadMiddleware = upload.array('images', 5);
     uploadMiddleware(req, res, async (err) => {
         // 3. Catch Multer/Cloudinary errors IMMEDIATELY
