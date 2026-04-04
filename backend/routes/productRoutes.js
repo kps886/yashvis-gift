@@ -71,39 +71,47 @@ router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
     });
 });
 
-router.put('/:id', protect, employeeAndAbove, upload.array('images', 5), async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) return res.status(404).json({ message: 'Product not found' });
-
-        const { name, description, price, category, stock, tags, existingImages } = req.body;
-
-        const newImageUrls = req.files ? req.files.map(file => file.path) : [];
-        const parsedExistingImages = existingImages ? JSON.parse(existingImages) : [];
-
-        const combinedImages = [...parsedExistingImages, ...newImageUrls];
-
-        if (name !== undefined) product.name = name;
-        if (description !== undefined) product.description = description;
-        if (price !== undefined) product.price = Number(price);
-        if (category !== undefined) product.category = category;
-        if (stock !== undefined) product.stock = Number(stock);
-        
-        if (tags !== undefined) {
-            product.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+router.put('/:id', protect, employeeAndAbove, async (req, res) => {
+    const uploadMiddleware = upload.array('images', 5);
+    uploadMiddleware(req, res, async (err) => {
+        // 3. Catch Multer/Cloudinary errors IMMEDIATELY
+        if (err) {
+            console.error("=== UPLOAD ERROR IN POST ===", err);
+            return res.status(400).json({ message: err.message || "Failed to upload images to Cloudinary" });
         }
-        
-        if (combinedImages.length > 0) {
-            product.images = combinedImages;
-        } else if (existingImages === "[]" && newImageUrls.length === 0) {
-            product.images = [];
-        }
+        try {
+            const product = await Product.findById(req.params.id);
+            if (!product) return res.status(404).json({ message: 'Product not found' });
 
-        const updatedProduct = await product.save();
-        res.json(updatedProduct);
-    } catch (error) {
-        res.status(400).json({ message: error.message || 'Error updating product' });
-    }
+            const { name, description, price, category, stock, tags, existingImages } = req.body;
+
+            const newImageUrls = req.files ? req.files.map(file => file.path) : [];
+            const parsedExistingImages = existingImages ? JSON.parse(existingImages) : [];
+
+            const combinedImages = [...parsedExistingImages, ...newImageUrls];
+
+            if (name !== undefined) product.name = name;
+            if (description !== undefined) product.description = description;
+            if (price !== undefined) product.price = Number(price);
+            if (category !== undefined) product.category = category;
+            if (stock !== undefined) product.stock = Number(stock);
+            
+            if (tags !== undefined) {
+                product.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+            }
+            
+            if (combinedImages.length > 0) {
+                product.images = combinedImages;
+            } else if (existingImages === "[]" && newImageUrls.length === 0) {
+                product.images = [];
+            }
+
+            const updatedProduct = await product.save();
+            res.json(updatedProduct);
+        } catch (error) {
+            res.status(400).json({ message: error.message || 'Error updating product' });
+        }
+    });
 });
 
 router.delete('/:id', protect, shopkeeperAndAbove, async (req, res) => {
