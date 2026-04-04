@@ -33,28 +33,42 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.post('/', protect, shopkeeperAndAbove, upload.array('images', 5), async (req, res) => {
-    try {
-        const { name, description, price, category, stock, tags } = req.body;
-        
-        const imageUrls = req.files ? req.files.map(file => file.path) : [];
-        
-        const parsedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
+    const uploadMiddleware = upload.array('images', 5);
+    uploadMiddleware(req, res, async (err) => {
+        // 3. Catch Multer/Cloudinary errors IMMEDIATELY
+        if (err) {
+            console.error("=== UPLOAD ERROR IN POST ===", err);
+            return res.status(400).json({ message: err.message || "Failed to upload images to Cloudinary" });
+        }
 
-        const product = await Product.create({
-            name,
-            description,
-            price: Number(price),
-            category,
-            images: imageUrls,
-            stock: Number(stock) || 0,
-            tags: parsedTags,
-            createdBy: req.user._id,
-        });
-        res.status(201).json(product);
-    } catch (error) {
-        res.status(400).json({ message: error.message || 'Error creating product' });
-    }
+        // 4. If we get here, the upload succeeded. Now we do the database logic.
+        try {
+            console.log("=== HIT POST /product ===");
+            console.log("req.body:", req.body);
+            console.log("req.files:", req.files);
+
+            const { name, description, price, category, stock, tags } = req.body;
+            
+            const imageUrls = req.files ? req.files.map(file => file.path) : [];
+            const parsedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+
+            const product = await Product.create({
+                name,
+                description,
+                price: Number(price),
+                category,
+                images: imageUrls,
+                stock: Number(stock) || 0,
+                tags: parsedTags,
+                createdBy: req.user._id,
+            });
+            res.status(201).json(product);
+        } catch (error) {
+            console.error("=== DB ERROR IN POST /product ===", error);
+            res.status(400).json({ message: error.message || 'Error creating product' });
+        }
+    });
 });
 
 router.put('/:id', protect, employeeAndAbove, upload.array('images', 5), async (req, res) => {
