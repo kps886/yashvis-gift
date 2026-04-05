@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from './../api'
+import React, { createContext, useState, useContext } from 'react';
+import api from './../api';
 
 export const AuthContext = createContext();
 
@@ -11,22 +11,19 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [authError, setAuthError] = useState(null);
 
-    // Set api default auth header whenever user changes
-    useEffect(() => {
-        if (user?.token) {
-            api.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
-        } else {
-            delete api.defaults.headers.common['Authorization'];
-        }
-    }, [user]);
+    // REMOVED: The useEffect that was setting api.defaults.headers
 
     const login = async (email, password) => {
         setLoading(true);
         setAuthError(null);
         try {
             const { data } = await api.post('/api/users/login', { email, password });
-            setUser(data);
+            
+            // Set localStorage BEFORE setting React state to guarantee
+            // the api.js interceptor can find it immediately
             localStorage.setItem('charmingUser', JSON.stringify(data));
+            setUser(data);
+            
             setLoading(false);
             return { success: true, role: data.role };
         } catch (err) {
@@ -42,8 +39,10 @@ export const AuthProvider = ({ children }) => {
         setAuthError(null);
         try {
             const { data } = await api.post('/api/users/register', { name, email, password });
-            setUser(data);
+            
             localStorage.setItem('charmingUser', JSON.stringify(data));
+            setUser(data);
+            
             setLoading(false);
             return { success: true, role: data.role };
         } catch (err) {
@@ -55,10 +54,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        setUser(null);
         localStorage.removeItem('charmingUser');
         localStorage.removeItem('cart');
-        delete api.defaults.headers.common['Authorization'];
+        setUser(null);
     };
 
     // Role helpers

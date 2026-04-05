@@ -114,6 +114,21 @@ router.put('/profile', protect, async (req, res) => {
     }
 });
 
+// ── Wishlist ──────────────────────────────────────────────────
+
+// @desc    Get current user's wishlist
+// @route   GET /api/users/wishlist
+// @access  Private
+router.get('/wishlist', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id)
+            .populate('wishlist', 'name price images stock tags category');
+        res.json(user.wishlist || []);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching wishlist' });
+    }
+});
+
 // ==========================================
 // ADMIN ROUTES
 // ==========================================
@@ -300,5 +315,30 @@ router.delete('/addresses/:addressId', protect, async (req, res) => {
         res.status(500).json({ message: 'Error deleting address' });
     }
 });
+
+
+
+// @desc    Toggle product in wishlist (add if absent, remove if present)
+// @route   POST /api/users/wishlist/:productId
+// @access  Private
+router.post('/wishlist/:productId', protect, async (req, res) => {
+    try {
+        const user      = await User.findById(req.user._id);
+        const productId = req.params.productId;
+        const idx       = user.wishlist.findIndex(id => id.toString() === productId);
+
+        if (idx === -1) {
+            user.wishlist.push(productId);
+        } else {
+            user.wishlist.splice(idx, 1);
+        }
+
+        await user.save();
+        res.json({ wishlisted: idx === -1, wishlist: user.wishlist });
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating wishlist' });
+    }
+});
+
 
 export default router;

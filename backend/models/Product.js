@@ -46,6 +46,8 @@ const productSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    avgRating:   { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
 }, {
     timestamps: true
 });

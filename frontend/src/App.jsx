@@ -14,6 +14,8 @@ import CheckoutPage from './checkout/CheckoutPage';
 import OrderSuccessPage from './orders/OrderSuccessPage';
 import MyOrdersPage from './orders/MyOrdersPage';
 import ProfilePage from './profile/ProfilePage';
+import { WishlistProvider, WishlistContext } from './wishlist/WishlistContext';
+import WishlistPage from './wishlist/WishlistPage';
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -22,6 +24,16 @@ const SunIcon = () => (
         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
         <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+);
+const HeartIcon = ({ filled }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+        viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+        fill={filled ? 'currentColor' : 'none'}
+        strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0
+            0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0
+            0 0-7.78z"/>
     </svg>
 );
 const MoonIcon = () => (
@@ -78,6 +90,7 @@ const Drawer = ({ open, onClose, children }) => (
 // ── Header ────────────────────────────────────────────────────
 const Header = ({ theme, toggleTheme, category, setCategory }) => {
     const { totalItems } = useContext(CartContext);
+    const { wishlist } = useContext(WishlistContext);
     const { user, logout, isLoggedIn, isAdmin,
         isShopkeeper, isEmployee } = useAuth();
     const navigate = useNavigate();
@@ -209,6 +222,20 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                 )}
                             </Link>
                         )}
+                        {(!isLoggedIn || user?.role === 'user') && (
+                            <Link
+                                to="/wishlist"
+                                className="relative p-2 hover:text-accent-gold transition-colors"
+                                aria-label="Wishlist"
+                            >
+                                <HeartIcon filled={false} />
+                                {wishlist.length > 0 && (
+                                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                                        {wishlist.length > 9 ? '9+' : wishlist.length}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
 
                         {/* User menu (desktop) */}
                         {isLoggedIn ? (
@@ -271,6 +298,12 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                                     hover:text-accent-gold transition-colors"
                                             >
                                                 My Orders
+                                            </Link>
+                                        )}
+                                        {user?.role === 'user' && (
+                                            <Link to="/wishlist" onClick={() => setUserMenuOpen(false)}
+                                                className="block px-4 py-2.5 text-sm hover:bg-primary-bg hover:text-accent-gold transition-colors">
+                                                My Wishlist
                                             </Link>
                                         )}
                                         <Link
@@ -410,6 +443,18 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                                 My Orders
                                             </Link>
                                             <Link
+                                                to="/wishlist"
+                                                onClick={() => setDrawerOpen(false)}
+                                                className="flex items-center justify-between px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors"
+                                            >
+                                                <span>Wishlist</span>
+                                                {wishlist.length > 0 && (
+                                                    <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                                                        {wishlist.length}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                            <Link
                                                 to="/profile"
                                                 onClick={() => setDrawerOpen(false)}
                                                 className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors"
@@ -462,165 +507,290 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
 };
 
 // ── Product Card ──────────────────────────────────────────────
-const ProductCard = ({ product }) => (
-    <div className="bg-secondary-bg border border-border-color group relative overflow-hidden text-center transition-shadow duration-300 hover:shadow-xl">
-        {product.tags?.includes('New Arrival') && (
-            <div className="absolute top-3 left-3 bg-accent-gold text-primary-bg px-2 py-1 text-xs font-bold z-10">NEW</div>
-        )}
-        {product.stock === 0 && (
-            <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 text-xs font-bold z-10">OUT OF STOCK</div>
-        )}
-        <div className="relative overflow-hidden">
-            <Link to={`/product/${product._id}`}>
-                <img
-                    src={product.images[0] || 'https://placehold.co/400x400/222222/D4AF37?text=Charming'}
-                    alt={product.name}
-                    className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-            </Link>
-        </div>
-        <div className="p-4">
-            <Link to={`/product/${product._id}`}>
-                <h3 className="text-base font-serif hover:text-accent-gold transition-colors line-clamp-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {product.name}
-                </h3>
-            </Link>
-            <p className="font-bold text-accent-gold mt-1">₹{product.price.toLocaleString('en-IN')}</p>
-        </div>
-    </div>
-);
+const ProductCard = ({ product }) => {
+    const { isWishlisted, toggle } = useContext(WishlistContext);
+    const { isLoggedIn } = useAuth();
+    const navigate = useNavigate();
+    const [heartAnim, setHeartAnim] = useState(false);
 
-// ── Homepage ──────────────────────────────────────────────────
-const HomePage = ({ products, loading, error, category, search, setSearch }) => {
-    const [debouncedSearch, setDebouncedSearch] = useState(search);
+    const wishlisted = isWishlisted(product._id);
 
-    // Debounce: only filter 300ms after user stops typing
-    useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(search), 300);
-        return () => clearTimeout(timer);
-    }, [search]);
+    const handleWishlist = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isLoggedIn) { navigate('/login'); return; }
+        setHeartAnim(true);
+        await toggle(product._id);
+        setTimeout(() => setHeartAnim(false), 400);
+    };
 
-    const filtered = products.filter(p => {
-        const matchCat = !category || p.category === category;
-        const matchSearch = !debouncedSearch ||
-            p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            p.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            p.category.toLowerCase().includes(debouncedSearch.toLowerCase());
-        return matchCat && matchSearch;
-    });
+    const avgRating = product.avgRating || 0;
 
     return (
-        <div>
-            {/* Hero — only when no filter active */}
-            {!category && !search && (
-                <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
-                    flex items-center justify-center text-center px-4">
-                    <div>
-                        <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg"
-                            style={{ fontFamily: "'Playfair Display', serif" }}>
-                            Discover Your Charm
-                        </h1>
-                        <p className="text-xl text-gray-300 mt-4">
-                            Curated collections of luxury and style.
-                        </p>
-                        <Link to="/"
-                            className="mt-8 inline-block bg-accent-gold text-primary-bg px-8 py-3
-                                font-bold uppercase tracking-wider hover:bg-yellow-500 transition-colors">
-                            Shop New Arrivals
-                        </Link>
-                    </div>
-                </section>
+        <div className="bg-secondary-bg border border-border-color group relative
+            overflow-hidden text-center transition-shadow duration-300 hover:shadow-xl">
+
+            {product.tags?.includes('New Arrival') && (
+                <div className="absolute top-3 left-3 bg-accent-gold text-primary-bg
+                    px-2 py-0.5 text-xs font-bold z-10 uppercase">
+                    New
+                </div>
+            )}
+            {product.stock === 0 && (
+                <div className="absolute top-3 right-10 bg-red-500 text-white
+                    px-2 py-0.5 text-xs font-bold z-10 uppercase">
+                    Out
+                </div>
             )}
 
-            <section className="container mx-auto py-10 px-4">
-                {/* Search bar */}
-                <div className="relative max-w-xl mx-auto mb-8">
-                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4
-                        text-text-secondary pointer-events-none"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" />
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                            strokeWidth={2} d="M21 21l-4.35-4.35" />
-                    </svg>
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Search products..."
-                        className="w-full pl-11 pr-10 py-3 bg-secondary-bg border border-border-color
-                            rounded-full focus:outline-none focus:border-accent-gold transition-colors
-                            text-sm"
+            {/* Wishlist heart */}
+            <button
+                onClick={handleWishlist}
+                className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex
+                    items-center justify-center transition-all duration-200 shadow-md
+                    ${wishlisted
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white/80 text-gray-600 hover:bg-red-50 hover:text-red-500'}
+                    ${heartAnim ? 'scale-125' : 'scale-100'}`}
+                title={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+                <HeartIcon filled={wishlisted} />
+            </button>
+
+            <div className="relative overflow-hidden">
+                <Link to={`/product/${product._id}`}>
+                    <img
+                        src={product.images?.[0] ||
+                            'https://placehold.co/400x400/222222/D4AF37?text=Charming'}
+                        alt={product.name}
+                        className="w-full aspect-square object-cover transition-transform
+                            duration-500 group-hover:scale-105"
                     />
-                    {search && (
-                        <button
-                            onClick={() => setSearch('')}
-                            className="absolute right-4 top-1/2 -translate-y-1/2
-                                text-text-secondary hover:text-text-primary transition-colors
-                                text-lg leading-none"
-                        >
-                            ✕
-                        </button>
-                    )}
-                </div>
+                </Link>
+            </div>
 
-                {/* Heading */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-serif"
+            <div className="p-3">
+                <Link to={`/product/${product._id}`}>
+                    <h3 className="text-sm font-serif hover:text-accent-gold transition-colors
+                        line-clamp-2 mb-1"
                         style={{ fontFamily: "'Playfair Display', serif" }}>
-                        {search
-                            ? `Results for "${search}"`
-                            : category || 'All Products'}
-                    </h2>
-                    {(search || category) && (
-                        <button
-                            onClick={() => { setSearch(''); }}
-                            className="text-xs text-text-secondary hover:text-accent-gold
-                                transition-colors underline"
-                        >
-                            Clear filters
-                        </button>
-                    )}
-                    <p className="text-sm text-text-secondary">
-                        {filtered.length} product{filtered.length !== 1 ? 's' : ''}
-                    </p>
-                </div>
+                        {product.name}
+                    </h3>
+                </Link>
 
-                {loading && (
-                    <div className="text-center py-16">
-                        <div className="inline-block w-8 h-8 border-2 border-accent-gold
-                            border-t-transparent rounded-full animate-spin mb-4" />
-                        <p className="text-text-secondary">Loading products...</p>
-                    </div>
-                )}
-                {error && (
-                    <div className="text-center py-16">
-                        <p className="text-red-400 mb-2">{error}</p>
-                        <p className="text-text-secondary text-sm">
-                            Make sure the backend server is running.
-                        </p>
-                    </div>
-                )}
-                {!loading && !error && filtered.length === 0 && (
-                    <div className="text-center py-16">
-                        <p className="text-text-secondary text-lg mb-2">No products found.</p>
-                        <button
-                            onClick={() => setSearch('')}
-                            className="text-accent-gold text-sm hover:underline"
-                        >
-                            Clear search
-                        </button>
+                {/* Star rating */}
+                {product.reviewCount > 0 && (
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                        {[1, 2, 3, 4, 5].map(n => (
+                            <svg key={n} width="10" height="10" viewBox="0 0 24 24"
+                                fill={n <= Math.round(avgRating) ? '#D4AF37' : 'none'}
+                                stroke="#D4AF37" strokeWidth="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14
+                                    18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27
+                                    8.91 8.26 12 2"/>
+                            </svg>
+                        ))}
+                        <span className="text-xs text-text-secondary">
+                            ({product.reviewCount})
+                        </span>
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {filtered.map(product => (
-                        <ProductCard key={product._id} product={product} />
-                    ))}
-                </div>
-            </section>
+                <p className="font-bold text-accent-gold text-sm">
+                    ₹{product.price.toLocaleString('en-IN')}
+                </p>
+            </div>
         </div>
     );
 };
+
+// ── Homepage ──────────────────────────────────────────────────
+const SORT_OPTIONS = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'price_asc', label: 'Price: Low → High' },
+    { value: 'price_desc', label: 'Price: High → Low' },
+    { value: 'name_asc', label: 'Name: A → Z' },
+];
+
+const HomePage = ({ products, loading, error, category, search, setSearch,
+    sort, setSort, page, setPage, pagination }) => (
+    <div>
+        {/* Hero */}
+        {!category && !search && page === 1 && (
+            <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800
+                to-gray-900 flex items-center justify-center text-center px-4">
+                <div>
+                    <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg"
+                        style={{ fontFamily: "'Playfair Display', serif" }}>
+                        Discover Your Charm
+                    </h1>
+                    <p className="text-xl text-gray-300 mt-4">
+                        Curated collections of luxury and style.
+                    </p>
+                    <Link to="/" className="mt-8 inline-block bg-accent-gold text-primary-bg
+                        px-8 py-3 font-bold uppercase tracking-wider hover:bg-yellow-500
+                        transition-colors">
+                        Shop New Arrivals
+                    </Link>
+                </div>
+            </section>
+        )}
+
+        <section className="container mx-auto py-10 px-4">
+            {/* Search bar */}
+            <div className="relative max-w-xl mx-auto mb-8">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4
+                    text-text-secondary pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                        strokeWidth={2} d="M21 21l-4.35-4.35" />
+                </svg>
+                <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-full pl-11 pr-10 py-3 bg-secondary-bg border border-border-color
+                        rounded-full focus:outline-none focus:border-accent-gold transition-colors
+                        text-sm"
+                />
+                {search && (
+                    <button onClick={() => setSearch('')}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary
+                            hover:text-text-primary text-lg leading-none">
+                        ✕
+                    </button>
+                )}
+            </div>
+
+            {/* Toolbar: title + count + sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <div>
+                    <h2 className="text-2xl font-serif"
+                        style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {search ? `Results for "${search}"` : category || 'All Products'}
+                    </h2>
+                    <p className="text-sm text-text-secondary mt-0.5">
+                        {pagination.total} product{pagination.total !== 1 ? 's' : ''}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {(search || category) && (
+                        <button onClick={() => setSearch('')}
+                            className="text-xs text-text-secondary hover:text-accent-gold
+                                underline transition-colors">
+                            Clear filters
+                        </button>
+                    )}
+                    <select
+                        value={sort}
+                        onChange={e => setSort(e.target.value)}
+                        className="p-2 pr-8 bg-secondary-bg border border-border-color rounded
+                            text-sm focus:outline-none focus:border-accent-gold transition-colors
+                            appearance-none cursor-pointer"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 8px center'
+                        }}
+                    >
+                        {SORT_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {/* Loading */}
+            {loading && (
+                <div className="text-center py-16">
+                    <div className="inline-block w-8 h-8 border-2 border-accent-gold
+                        border-t-transparent rounded-full animate-spin mb-4"/>
+                    <p className="text-text-secondary">Loading products...</p>
+                </div>
+            )}
+
+            {/* Error */}
+            {error && (
+                <div className="text-center py-16">
+                    <p className="text-red-400 mb-2">{error}</p>
+                    <p className="text-text-secondary text-sm">
+                        Make sure the backend server is running.
+                    </p>
+                </div>
+            )}
+
+            {/* Empty */}
+            {!loading && !error && products.length === 0 && (
+                <div className="text-center py-16">
+                    <p className="text-text-secondary text-lg mb-3">No products found.</p>
+                    <button onClick={() => setSearch('')}
+                        className="text-accent-gold text-sm hover:underline">
+                        Clear search
+                    </button>
+                </div>
+            )}
+
+            {/* Grid */}
+            {!loading && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {products.map(product => (
+                        <ProductCard key={product._id} product={product} />
+                    ))}
+                </div>
+            )}
+
+            {/* Pagination */}
+            {!loading && pagination.pages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
+                    <button
+                        onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0 }); }}
+                        disabled={page === 1}
+                        className="px-4 py-2 border border-border-color text-sm font-semibold
+                            hover:border-accent-gold hover:text-accent-gold transition-colors
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        ← Prev
+                    </button>
+
+                    {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                        .filter(n => n === 1 || n === pagination.pages ||
+                            Math.abs(n - page) <= 1)
+                        .reduce((acc, n, i, arr) => {
+                            if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+                            acc.push(n);
+                            return acc;
+                        }, [])
+                        .map((n, i) => n === '...' ? (
+                            <span key={`dot${i}`}
+                                className="px-2 text-text-secondary">…</span>
+                        ) : (
+                            <button key={n}
+                                onClick={() => { setPage(n); window.scrollTo({ top: 0 }); }}
+                                className={`w-9 h-9 text-sm font-bold border transition-colors ${page === n
+                                    ? 'bg-accent-gold text-primary-bg border-accent-gold'
+                                    : 'border-border-color hover:border-accent-gold hover:text-accent-gold'
+                                    }`}>
+                                {n}
+                            </button>
+                        ))
+                    }
+
+                    <button
+                        onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0 }); }}
+                        disabled={page === pagination.pages}
+                        className="px-4 py-2 border border-border-color text-sm font-semibold
+                            hover:border-accent-gold hover:text-accent-gold transition-colors
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Next →
+                    </button>
+                </div>
+            )}
+        </section>
+    </div>
+);
 
 // ── Root App (with providers) ─────────────────────────────────
 export default function App() {
@@ -630,6 +800,9 @@ export default function App() {
     const [error, setError] = useState(null);
     const [category, setCategory] = useState('');
     const [search, setSearch] = useState('');
+    const [sort, setSort] = useState('newest');
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ pages: 1, total: 0 });
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -646,16 +819,27 @@ export default function App() {
 
     useEffect(() => {
         const fetchProducts = async () => {
+            setLoading(true);
             try {
-                const { data } = await api.get('/api/products');
-                setProducts(data);
-            } catch (err) {
+                const params = new URLSearchParams({
+                    page,
+                    limit: 12,
+                    sort,
+                    ...(category && { category }),
+                    ...(search && { search }),
+                });
+                const { data } = await api.get(`/api/products?${params}`);
+                setProducts(data.products);
+                setPagination({ pages: data.pages, total: data.total });
+            } catch {
                 setError('Failed to connect to backend.');
             }
             setLoading(false);
         };
         fetchProducts();
-    }, []);
+    }, [page, sort, category, search]);
+
+    useEffect(() => { setPage(1); }, [category, search, sort]);
 
     const themeStyles = useMemo(() => `
         :root[data-theme='dark'] {
@@ -703,31 +887,38 @@ export default function App() {
     return (
         <AuthProvider>
             <CartProvider>
-                <Router>
-                    <style>{`
+                <WishlistProvider>
+                    <Router>
+                        <style>{`
                         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
                         ${themeStyles}
-                    `}</style>
+                        `}</style>
 
-                    <AppRoutes
-                        theme={theme}
-                        toggleTheme={toggleTheme}
-                        products={products}
-                        loading={loading}
-                        error={error}
-                        category={category}
-                        setCategory={setCategory}
-                        search={search}
-                        setSearch={setSearch}
-                    />
-                </Router>
+                        <AppRoutes
+                            theme={theme}
+                            toggleTheme={toggleTheme}
+                            products={products}
+                            loading={loading}
+                            error={error}
+                            category={category}
+                            setCategory={setCategory}
+                            search={search}
+                            setSearch={setSearch}
+                            sort={sort}
+                            setSort={setSort}
+                            page={page}
+                            setPage={setPage}
+                            pagination={pagination}
+                        />
+                    </Router>
+                </WishlistProvider>
             </CartProvider>
         </AuthProvider>
     );
 }
 
 // Separate so we can use useNavigate inside Router context
-function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch}) {
+function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch, sort, setSort, page, setPage, pagination }) {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--primary-bg)', color: 'var(--text-primary)' }}>
@@ -748,9 +939,20 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                         error={error}
                                         category={category}
                                         search={search}
-                                        setSearch={setSearch} />
+                                        setSearch={setSearch}
+                                        sort={sort}
+                                        setSort={setSort}
+                                        page={page}
+                                        setPage={setPage}
+                                        pagination={pagination}
+                                    />
                                 } />
                                 <Route path="/cart" element={<CartPage />} />
+                                <Route path="/wishlist" element={
+                                    <ProtectedRoute allowedRoles={['user', 'admin', 'shopkeeper', 'employee']}>
+                                        <WishlistPage />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/product/:id" element={<ProductDetailsPage />} />
 
                                 {/* Admin only */}

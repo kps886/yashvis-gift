@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import api from './../api';
 import { useAuth } from '../auth/AuthContext';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
 const ROLE_BADGE = {
-    admin:      'bg-red-500/20 text-red-400 border-red-500/40',
+    admin: 'bg-red-500/20 text-red-400 border-red-500/40',
     shopkeeper: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
-    employee:   'bg-blue-500/20 text-blue-400 border-blue-500/40',
-    user:       'bg-green-500/20 text-green-400 border-green-500/40',
+    employee: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
+    user: 'bg-green-500/20 text-green-400 border-green-500/40',
 };
 
 const ORDER_STATUS_STYLES = {
-    pending:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+    pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
     processing: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
-    shipped:    'bg-purple-500/20 text-purple-400 border-purple-500/40',
-    delivered:  'bg-green-500/20 text-green-400 border-green-500/40',
-    cancelled:  'bg-red-500/20 text-red-400 border-red-500/40',
+    shipped: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
+    delivered: 'bg-green-500/20 text-green-400 border-green-500/40',
+    cancelled: 'bg-red-500/20 text-red-400 border-red-500/40',
 };
 
 // ── Stat card ─────────────────────────────────────────────────
@@ -30,11 +31,10 @@ const Tab = ({ label, active, onClick, badge }) => (
     <button
         onClick={onClick}
         className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider
-            transition-colors border-b-2 whitespace-nowrap ${
-            active
+            transition-colors border-b-2 whitespace-nowrap ${active
                 ? 'border-accent-gold text-accent-gold'
                 : 'border-transparent text-text-secondary hover:text-text-primary'
-        }`}
+            }`}
     >
         {label}
         {badge > 0 && (
@@ -52,12 +52,12 @@ const Tab = ({ label, active, onClick, badge }) => (
 
 // ── Users panel ───────────────────────────────────────────────
 const UsersPanel = ({ currentUserId }) => {
-    const [users, setUsers]           = useState([]);
-    const [loading, setLoading]       = useState(true);
-    const [showForm, setShowForm]     = useState(false);
-    const [newUser, setNewUser]       = useState({ name: '', email: '', password: '', role: 'employee' });
-    const [error, setError]           = useState('');
-    const [success, setSuccess]       = useState('');
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee' });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -98,7 +98,7 @@ const UsersPanel = ({ currentUserId }) => {
 
     return (
         <div>
-            {error   && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/40 text-green-400 rounded text-sm">{success}</div>}
 
             <div className="flex justify-between items-center mb-4">
@@ -133,7 +133,7 @@ const UsersPanel = ({ currentUserId }) => {
                             className="p-2 bg-primary-bg border border-border-color rounded
                                 focus:outline-none focus:border-accent-gold text-sm"
                         >
-                            {['admin','shopkeeper','employee','user'].map(r => (
+                            {['admin', 'shopkeeper', 'employee', 'user'].map(r => (
                                 <option key={r} value={r} className="capitalize">{r}</option>
                             ))}
                         </select>
@@ -161,7 +161,7 @@ const UsersPanel = ({ currentUserId }) => {
                         <thead>
                             <tr className="border-b border-border-color text-text-secondary
                                 uppercase tracking-wider text-xs">
-                                {['Name','Email','Role','Status','Joined','Actions'].map(h => (
+                                {['Name', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map(h => (
                                     <th key={h} className="text-left py-3 px-4">{h}</th>
                                 ))}
                             </tr>
@@ -191,11 +191,10 @@ const UsersPanel = ({ currentUserId }) => {
                                             <div className="flex gap-2">
                                                 <button onClick={() => handleToggle(u)}
                                                     className={`text-xs px-2 py-1 border rounded
-                                                        hover:opacity-80 transition-opacity ${
-                                                        u.isActive
+                                                        hover:opacity-80 transition-opacity ${u.isActive
                                                             ? 'border-orange-500/40 text-orange-400'
                                                             : 'border-green-500/40 text-green-400'
-                                                    }`}>
+                                                        }`}>
                                                     {u.isActive ? 'Deactivate' : 'Activate'}
                                                 </button>
                                                 <button onClick={() => handleDelete(u._id, u.name)}
@@ -220,14 +219,14 @@ const UsersPanel = ({ currentUserId }) => {
 
 // ── Orders panel ──────────────────────────────────────────────
 const OrdersPanel = () => {
-    const [orders, setOrders]         = useState([]);
-    const [loading, setLoading]       = useState(true);
-    const [expanded, setExpanded]     = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState(null);
     const [statusEdit, setStatusEdit] = useState({});   // { [orderId]: { status, tracking } }
-    const [updating, setUpdating]     = useState(null);
-    const [error, setError]           = useState('');
-    const [success, setSuccess]       = useState('');
-    const [filter, setFilter]         = useState('all');
+    const [updating, setUpdating] = useState(null);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [filter, setFilter] = useState('all');
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -246,7 +245,7 @@ const OrdersPanel = () => {
         setError(''); setSuccess('');
         try {
             await api.put(`/api/orders/${orderId}/status`, {
-                orderStatus:    edit.status,
+                orderStatus: edit.status,
                 trackingNumber: edit.tracking || undefined,
             });
             setSuccess('Order status updated');
@@ -256,24 +255,23 @@ const OrdersPanel = () => {
         setUpdating(null);
     };
 
-    const STATUSES = ['pending','processing','shipped','delivered','cancelled'];
+    const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
     const filtered = filter === 'all' ? orders : orders.filter(o => o.orderStatus === filter);
 
     return (
         <div>
-            {error   && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/40 text-green-400 rounded text-sm">{success}</div>}
 
             {/* Filter bar */}
             <div className="flex gap-2 flex-wrap mb-5">
                 {['all', ...STATUSES].map(s => (
                     <button key={s} onClick={() => setFilter(s)}
-                        className={`px-3 py-1.5 text-xs font-bold uppercase rounded border transition-colors ${
-                            filter === s
+                        className={`px-3 py-1.5 text-xs font-bold uppercase rounded border transition-colors ${filter === s
                                 ? 'bg-accent-gold text-primary-bg border-accent-gold'
                                 : 'border-border-color text-text-secondary hover:border-text-secondary'
-                        }`}>
+                            }`}>
                         {s} {s === 'all' ? `(${orders.length})` : `(${orders.filter(o => o.orderStatus === s).length})`}
                     </button>
                 ))}
@@ -400,61 +398,63 @@ const OrdersPanel = () => {
 
                                     {/* Status updater */}
                                     {order.orderStatus !== 'delivered' &&
-                                     order.orderStatus !== 'cancelled' && (
-                                        <div
-                                            className="p-4 rounded"
-                                            style={{ backgroundColor: 'var(--primary-bg)',
-                                                border: '1px solid var(--border-color)' }}
-                                        >
-                                            <p className="text-xs font-bold uppercase tracking-wider
+                                        order.orderStatus !== 'cancelled' && (
+                                            <div
+                                                className="p-4 rounded"
+                                                style={{
+                                                    backgroundColor: 'var(--primary-bg)',
+                                                    border: '1px solid var(--border-color)'
+                                                }}
+                                            >
+                                                <p className="text-xs font-bold uppercase tracking-wider
                                                 text-text-secondary mb-3">
-                                                Update Order Status
-                                            </p>
-                                            <div className="flex flex-col sm:flex-row gap-3">
-                                                <select
-                                                    value={statusEdit[order._id]?.status || order.orderStatus}
-                                                    onChange={e => setStatusEdit(prev => ({
-                                                        ...prev,
-                                                        [order._id]: {
-                                                            ...prev[order._id],
-                                                            status: e.target.value,
-                                                        },
-                                                    }))}
-                                                    className="flex-1 p-2 bg-secondary-bg border
+                                                    Update Order Status
+                                                </p>
+                                                <div className="flex flex-col sm:flex-row gap-3">
+                                                    <select
+                                                        value={statusEdit[order._id]?.status || order.orderStatus}
+                                                        onChange={e => setStatusEdit(prev => ({
+                                                            ...prev,
+                                                            [order._id]: {
+                                                                ...prev[order._id],
+                                                                status: e.target.value,
+                                                            },
+                                                        }))}
+                                                        className="flex-1 p-2 bg-secondary-bg border
                                                         border-border-color rounded text-sm
                                                         focus:outline-none focus:border-accent-gold"
-                                                >
-                                                    {STATUSES.map(s => (
-                                                        <option key={s} value={s} className="capitalize">{s}</option>
-                                                    ))}
-                                                </select>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Tracking number (optional)"
-                                                    value={statusEdit[order._id]?.tracking || order.trackingNumber || ''}
-                                                    onChange={e => setStatusEdit(prev => ({
-                                                        ...prev,
-                                                        [order._id]: {
-                                                            ...prev[order._id],
-                                                            tracking: e.target.value,
-                                                        },
-                                                    }))}
-                                                    className="flex-1 p-2 bg-secondary-bg border
+                                                    >
+                                                        {STATUSES.map(s => (
+                                                            <option key={s} value={s} className="capitalize">{s}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Tracking number (optional)"
+                                                        value={statusEdit[order._id]?.tracking || order.trackingNumber || ''}
+                                                        onChange={e => setStatusEdit(prev => ({
+                                                            ...prev,
+                                                            [order._id]: {
+                                                                ...prev[order._id],
+                                                                tracking: e.target.value,
+                                                            },
+                                                        }))}
+                                                        className="flex-1 p-2 bg-secondary-bg border
                                                         border-border-color rounded text-sm
                                                         focus:outline-none focus:border-accent-gold"
-                                                />
-                                                <button
-                                                    onClick={() => handleUpdateStatus(order._id)}
-                                                    disabled={updating === order._id}
-                                                    className="px-5 py-2 bg-accent-gold text-primary-bg
+                                                    />
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(order._id)}
+                                                        disabled={updating === order._id}
+                                                        className="px-5 py-2 bg-accent-gold text-primary-bg
                                                         font-bold text-sm hover:bg-yellow-500
                                                         transition-colors disabled:opacity-50 rounded"
-                                                >
-                                                    {updating === order._id ? 'Saving...' : 'Update'}
-                                                </button>
+                                                    >
+                                                        {updating === order._id ? 'Saving...' : 'Update'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
                                 </div>
                             )}
                         </div>
@@ -467,16 +467,16 @@ const OrdersPanel = () => {
 
 // ── Promo codes panel ─────────────────────────────────────────
 const PromoPanel = () => {
-    const [promos, setPromos]     = useState([]);
-    const [loading, setLoading]   = useState(true);
+    const [promos, setPromos] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm]         = useState({
+    const [form, setForm] = useState({
         code: '', discountType: 'flat', discountValue: '',
         maxDiscountAmount: '', minOrderValue: '', expiresAt: '',
         usageLimit: '', isActive: true,
     });
-    const [error, setError]       = useState('');
-    const [success, setSuccess]   = useState('');
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const fetchPromos = async () => {
         setLoading(true);
@@ -493,11 +493,11 @@ const PromoPanel = () => {
         setError(''); setSuccess('');
         const payload = {
             ...form,
-            discountValue:    Number(form.discountValue),
-            minOrderValue:    Number(form.minOrderValue) || 0,
+            discountValue: Number(form.discountValue),
+            minOrderValue: Number(form.minOrderValue) || 0,
             maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
-            usageLimit:       form.usageLimit ? Number(form.usageLimit) : null,
-            expiresAt:        form.expiresAt || null,
+            usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+            expiresAt: form.expiresAt || null,
         };
         try {
             await api.post('/api/promo', payload);
@@ -529,7 +529,7 @@ const PromoPanel = () => {
 
     return (
         <div>
-            {error   && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/40 text-green-400 rounded text-sm">{success}</div>}
 
             <div className="flex justify-between items-center mb-4">
@@ -628,7 +628,7 @@ const PromoPanel = () => {
                         <thead>
                             <tr className="border-b border-border-color text-text-secondary
                                 uppercase tracking-wider text-xs">
-                                {['Code','Type','Value','Min Order','Usage','Expires','Status','Actions'].map(h => (
+                                {['Code', 'Type', 'Value', 'Min Order', 'Usage', 'Expires', 'Status', 'Actions'].map(h => (
                                     <th key={h} className="text-left py-3 px-3">{h}</th>
                                 ))}
                             </tr>
@@ -669,11 +669,10 @@ const PromoPanel = () => {
                                         <div className="flex gap-2">
                                             <button onClick={() => handleToggle(p)}
                                                 className={`text-xs px-2 py-1 border rounded
-                                                    hover:opacity-80 transition-opacity ${
-                                                    p.isActive
+                                                    hover:opacity-80 transition-opacity ${p.isActive
                                                         ? 'border-orange-500/40 text-orange-400'
                                                         : 'border-green-500/40 text-green-400'
-                                                }`}>
+                                                    }`}>
                                                 {p.isActive ? 'Disable' : 'Enable'}
                                             </button>
                                             <button onClick={() => handleDelete(p._id, p.code)}
@@ -696,12 +695,14 @@ const PromoPanel = () => {
 // ── Products panel (kept simple for admin) ────────────────────
 const ProductsPanel = () => {
     const [products, setProducts] = useState([]);
-    const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         api.get('/api/products')
-            .then(r => { setProducts(r.data); setLoading(false); })
+            .then(r => {
+                setProducts(r.data.products); setLoading(false);
+            })
             .catch(() => { setError('Failed to load'); setLoading(false); });
     }, []);
 
@@ -725,7 +726,7 @@ const ProductsPanel = () => {
                         <thead>
                             <tr className="border-b border-border-color text-text-secondary
                                 uppercase tracking-wider text-xs">
-                                {['Product','Category','Price','Stock','Actions'].map(h => (
+                                {['Product', 'Category', 'Price', 'Stock', 'Actions'].map(h => (
                                     <th key={h} className="text-left py-3 px-4">{h}</th>
                                 ))}
                             </tr>
@@ -765,8 +766,8 @@ const ProductsPanel = () => {
 // Main Admin Dashboard
 // ─────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
-    const { user }          = useAuth();
-    const [tab, setTab]     = useState('orders');
+    const { user } = useAuth();
+    const [tab, setTab] = useState('analytics');
     const [counts, setCounts] = useState({ users: 0, orders: 0, products: 0, promos: 0 });
 
     useEffect(() => {
@@ -779,12 +780,12 @@ const AdminDashboard = () => {
                     api.get('/api/promo'),
                 ]);
                 setCounts({
-                    users:    u.data.length,
-                    orders:   o.data.length,
-                    products: p.data.length,
-                    promos:   pr.data.length,
-                    pending:  o.data.filter(x => x.orderStatus === 'pending').length,
-                    revenue:  o.data
+                    users: u.data.length,
+                    orders: o.data.length,
+                    products: p.data.products.length,
+                    promos: pr.data.length,
+                    pending: o.data.filter(x => x.orderStatus === 'pending').length,
+                    revenue: o.data
                         .filter(x => x.paymentStatus === 'paid')
                         .reduce((a, x) => a + x.total, 0),
                 });
@@ -815,27 +816,29 @@ const AdminDashboard = () => {
                 <Stat label="Total Revenue"
                     value={`₹${(counts.revenue || 0).toLocaleString('en-IN')}`}
                     color="text-accent-gold" />
-                <Stat label="Total Orders"   value={counts.orders}   color="text-blue-400" />
+                <Stat label="Total Orders" value={counts.orders} color="text-blue-400" />
                 <Stat label="Pending Orders" value={counts.pending || 0} color="text-yellow-400" />
-                <Stat label="Products"       value={counts.products} color="text-purple-400" />
-                <Stat label="Users"          value={counts.users}    color="text-green-400" />
-                <Stat label="Promo Codes"    value={counts.promos}   color="text-pink-400" />
+                <Stat label="Products" value={counts.products} color="text-purple-400" />
+                <Stat label="Users" value={counts.users} color="text-green-400" />
+                <Stat label="Promo Codes" value={counts.promos} color="text-pink-400" />
             </div>
 
             {/* Tabs */}
             <div className="flex border-b border-border-color mb-6 overflow-x-auto gap-0">
-                <Tab label="Orders"      active={tab === 'orders'}   onClick={() => setTab('orders')}
+                <Tab label="Analytics" active={tab === 'analytics'} onClick={() => setTab('analytics')} />
+                <Tab label="Orders" active={tab === 'orders'} onClick={() => setTab('orders')}
                     badge={counts.pending} />
-                <Tab label="Users"       active={tab === 'users'}    onClick={() => setTab('users')} />
-                <Tab label="Products"    active={tab === 'products'} onClick={() => setTab('products')} />
-                <Tab label="Promo Codes" active={tab === 'promos'}   onClick={() => setTab('promos')} />
+                <Tab label="Users" active={tab === 'users'} onClick={() => setTab('users')} />
+                <Tab label="Products" active={tab === 'products'} onClick={() => setTab('products')} />
+                <Tab label="Promo Codes" active={tab === 'promos'} onClick={() => setTab('promos')} />
             </div>
 
             {/* Panel */}
-            {tab === 'orders'   && <OrdersPanel />}
-            {tab === 'users'    && <UsersPanel currentUserId={user._id} />}
+            {tab === 'analytics' && <AnalyticsDashboard />}
+            {tab === 'orders' && <OrdersPanel />}
+            {tab === 'users' && <UsersPanel currentUserId={user._id} />}
             {tab === 'products' && <ProductsPanel />}
-            {tab === 'promos'   && <PromoPanel />}
+            {tab === 'promos' && <PromoPanel />}
         </div>
     );
 };

@@ -5,4 +5,21 @@ const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5001"
 });
 
+api.interceptors.request.use(
+    (config) => {        
+        const stored = localStorage.getItem('charmingUser');
+        if (stored) {
+            const parsedUser = JSON.parse(stored);
+            if (parsedUser.token) {
+                config.headers = config.headers || {};
+                config.headers.Authorization = `Bearer ${parsedUser.token}`;
+            }
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export default api;

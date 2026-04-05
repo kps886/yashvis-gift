@@ -2,14 +2,14 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const addressSchema = new mongoose.Schema({
-    fullName:  { type: String, required: true },
-    phone:     { type: String, required: true },
-    line1:     { type: String, required: true },
-    line2:     { type: String, default: '' },
-    city:      { type: String, required: true },
-    state:     { type: String, required: true },
-    pincode:   { type: String, required: true },
-    country:   { type: String, default: 'India' },
+    fullName: { type: String, required: true },
+    phone: { type: String, required: true },
+    line1: { type: String, required: true },
+    line2: { type: String, default: '' },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+    country: { type: String, default: 'India' },
     isDefault: { type: Boolean, default: false },
 }, { _id: true });
 
@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
         default: 'user',
     },
     addresses: [addressSchema],   // ← NEW
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+        default: [],
+    }],
     shopId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Shop',
