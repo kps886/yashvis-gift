@@ -1,7 +1,7 @@
 {
-  "name": "charming-backend",
+  "name": "monika-creation-backend",
   "version": "1.0.0",
-  "description": "Charming Shop Backend API",
+  "description": "monika-creation Shop Backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

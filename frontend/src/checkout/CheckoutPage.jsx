@@ -272,7 +272,7 @@ const CheckoutPage = () => {
                 key:         data.keyId,
                 amount:      data.amount,          // paise
                 currency:    data.currency,
-                name:        'Charming',
+                name:        'MonikaCreation',
                 description: 'Order Payment',
                 order_id:    data.razorpayOrderId,
                 prefill: {

@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem('charmingUser');
+        const stored = localStorage.getItem('monikaCreationUser');
         return stored ? JSON.parse(stored) : null;
     });
     const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
             
             // Set localStorage BEFORE setting React state to guarantee
             // the api.js interceptor can find it immediately
-            localStorage.setItem('charmingUser', JSON.stringify(data));
+            localStorage.setItem('monikaCreationUser', JSON.stringify(data));
             setUser(data);
             
             setLoading(false);
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await api.post('/api/users/register', { name, email, password });
             
-            localStorage.setItem('charmingUser', JSON.stringify(data));
+            localStorage.setItem('monikaCreationUser', JSON.stringify(data));
             setUser(data);
             
             setLoading(false);
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('charmingUser');
+        localStorage.removeItem('monikaCreationUser');
         localStorage.removeItem('cart');
         setUser(null);
     };

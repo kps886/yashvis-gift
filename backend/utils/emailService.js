@@ -86,12 +86,12 @@ const layout = (content) => `
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">CHARMING</div>
+      <div class="logo">MonikaCreation</div>
       <div class="tagline">Curated collections of luxury and style</div>
     </div>
     <div class="body">${content}</div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} Charming. All rights reserved.</p>
+      <p>© ${new Date().getFullYear()} MonikaCreation. All rights reserved.</p>
       <p style="margin-top:6px">Questions? <a href="mailto:${process.env.EMAIL_USER}">Contact us</a></p>
     </div>
   </div>
@@ -164,7 +164,7 @@ export const sendOrderConfirmation = async (order, userEmail, userName) => {
 
     await sendEmail({
         to:      userEmail,
-        subject: `Order Confirmed — #${orderId} | Charming`,
+        subject: `Order Confirmed — #${orderId} | MonikaCreation`,
         html,
     });
 };
@@ -228,7 +228,7 @@ export const sendStatusUpdate = async (order, userEmail, userName) => {
 
     await sendEmail({
         to:      userEmail,
-        subject: `${info.emoji} Order ${order.orderStatus} — #${orderId} | Charming`,
+        subject: `${info.emoji} Order ${order.orderStatus} — #${orderId} | MonikaCreation`,
         html,
     });
 };

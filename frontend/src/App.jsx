@@ -166,7 +166,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                         className="text-2xl md:text-3xl font-serif text-accent-gold flex-shrink-0"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
-                        Charming
+                        MonikaCreation
                     </Link>
 
                     {/* Desktop category nav */}
@@ -347,7 +347,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                         className="text-xl font-serif text-accent-gold"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
-                        Charming
+                        MonikaCreation
                     </span>
                     <button
                         onClick={() => setDrawerOpen(false)}
@@ -561,7 +561,7 @@ const ProductCard = ({ product }) => {
                 <Link to={`/product/${product._id}`}>
                     <img
                         src={product.images?.[0] ||
-                            'https://placehold.co/400x400/222222/D4AF37?text=Charming'}
+                            'https://placehold.co/400x400/222222/D4AF37?text=MonikaCreation'}
                         alt={product.name}
                         className="w-full aspect-square object-cover transition-transform
                             duration-500 group-hover:scale-105"
@@ -1005,7 +1005,7 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                             </Routes>
                         </main>
                         <footer style={{ backgroundColor: 'var(--secondary-bg)', borderTop: '1px solid var(--border-color)' }} className="text-center p-8 mt-auto">
-                            <p className="text-text-secondary text-sm">&copy; 2025 Charming. All Rights Reserved.</p>
+                            <p className="text-text-secondary text-sm">&copy; 2025 MonikaCreation. All Rights Reserved.</p>
                         </footer>
                     </>
                 } />

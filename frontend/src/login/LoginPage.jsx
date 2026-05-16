@@ -68,7 +68,7 @@ const LoginPage = () => {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <h1 className="text-5xl font-serif text-accent-gold" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        Charming
+                        MonikaCreation
                     </h1>
                     <p className="text-text-secondary mt-2">Curated collections of luxury and style.</p>
                 </div>
@@ -171,7 +171,7 @@ const LoginPage = () => {
                     {/* Role hint for demo */}
                     <div className="mt-6 p-3 bg-primary-bg border border-border-color rounded text-xs text-text-secondary">
                         <p className="font-bold mb-1 text-text-primary">Demo Accounts:</p>
-                        <p>Admin: admin@charming.com / admin123456</p>
+                        <p>Admin: admin@monikaCreation.com / admin123456</p>
                         <p className="mt-1 italic">Run <code>node seed.js</code> in backend to create admin.</p>
                     </div>
                 </div>

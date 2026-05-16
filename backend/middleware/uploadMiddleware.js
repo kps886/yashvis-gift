@@ -14,7 +14,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'charming_products',
+        folder: 'monikaCreation_products',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     }
 });

@@ -131,7 +131,7 @@ const ProductDetailsPage = () => {
                     <div className="bg-secondary-bg border border-border-color p-3 mb-3">
                         <img
                             src={product.images?.[selectedImage] ||
-                                'https://placehold.co/600x600/222/D4AF37?text=Charming'}
+                                'https://placehold.co/600x600/222/D4AF37?text=MonikaCreation'}
                             alt={product.name}
                             className="w-full aspect-square object-cover"
                         />

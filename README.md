@@ -1,4 +1,4 @@
-# Charming — Full Stack Shop Website
+# Monika Creation — Full Stack Shop Website
 
 A complete e-commerce platform with a 4-tier role hierarchy, JWT authentication, and React frontend.
 
@@ -7,7 +7,7 @@ A complete e-commerce platform with a 4-tier role hierarchy, JWT authentication,
 ## 🗂 Project Structure
 
 ```
-charming/
+monika creation/
 ├── backend/          ← Express + MongoDB API
 └── frontend/         ← React + Tailwind UI
 ```
@@ -25,7 +25,7 @@ npm install
 
 Edit `.env`:
 ```
-MONGO_URI=mongodb://127.0.0.1:27017/charming
+MONGO_URI=mongodb://127.0.0.1:27017/monika-creation
 PORT=5001
 JWT_SECRET=change_this_to_a_long_random_string
 JWT_EXPIRE=30d
@@ -117,7 +117,7 @@ npm install -g pm2
 
 cd backend
 npm install
-pm2 start server.js --name charming-api
+pm2 start server.js --name monika-creation-api
 pm2 save
 ```
 
@@ -135,7 +135,7 @@ server {
     server_name yourdomain.com;
 
     # Serve React build
-    root /var/www/charming/frontend/build;
+    root /var/www/monika-creation/frontend/build;
     index index.html;
 
     # API proxy
@@ -212,6 +212,6 @@ JWT_EXPIRE=30d       # Token expiry
 - [ ] `node seed.js` to create admin user
 - [ ] `cd frontend && npm install`
 - [ ] `npm start` in both folders
-- [ ] Login at `http://localhost:3000` with `admin@charming.com` / `admin123456`
+- [ ] Login at `http://localhost:3000` with `admin@monikacreation.com` / `admin123456`
 - [ ] Change admin password immediately via profile
 - [ ] Create shopkeeper and employee accounts via Admin Dashboard

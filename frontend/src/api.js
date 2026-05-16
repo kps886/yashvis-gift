@@ -7,7 +7,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {        
-        const stored = localStorage.getItem('charmingUser');
+        const stored = localStorage.getItem('monikaCreationUser');
         if (stored) {
             const parsedUser = JSON.parse(stored);
             if (parsedUser.token) {

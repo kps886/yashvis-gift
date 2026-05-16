@@ -102,8 +102,8 @@ const ProfilePage = () => {
             setProfileMsg({ type: 'success', text: 'Profile updated successfully' });
             setPasswords({ current: '', next: '', confirm: '' });
             // refresh token in auth context
-            const stored = JSON.parse(localStorage.getItem('charmingUser') || '{}');
-            localStorage.setItem('charmingUser', JSON.stringify({ ...stored, ...data }));
+            const stored = JSON.parse(localStorage.getItem('monikaCreationUser') || '{}');
+            localStorage.setItem('monikaCreationUser', JSON.stringify({ ...stored, ...data }));
         } catch (err) {
             setProfileMsg({
                 type: 'error',
