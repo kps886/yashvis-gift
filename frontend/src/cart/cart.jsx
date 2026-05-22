@@ -16,6 +16,11 @@ const CartPage = () => {
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
+    const DELIVERY_THRESHOLD = 500;
+    const DELIVERY_FEE = 50;
+    const deliveryFee = totalPrice >= DELIVERY_THRESHOLD || totalPrice === 0 ? 0 : DELIVERY_FEE;
+    const finalTotal = totalPrice + deliveryFee;
+
     const handleCheckout = () => {
         if (!isLoggedIn) {
             navigate('/login', { state: { from: { pathname: '/checkout' } } });
@@ -92,11 +97,18 @@ const CartPage = () => {
                         </div>
                         <div className="flex justify-between items-center mb-6 text-text-secondary">
                             <span>Shipping</span>
-                            <span className="text-green-400">Free</span>
+                            <span className={deliveryFee === 0 ? "text-green-400 font-semibold" : ""}>
+                                {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
+                            </span>
                         </div>
+                        {totalPrice > 0 && totalPrice < DELIVERY_THRESHOLD && (
+                            <p className="text-xs text-text-secondary mb-4 bg-primary-bg p-2 rounded border border-border-color">
+                                💡 Add ₹{(DELIVERY_THRESHOLD - totalPrice).toLocaleString('en-IN')} more for free delivery
+                            </p>
+                        )}
                         <div className="border-t border-border-color pt-4 flex justify-between items-center mb-6">
                             <h3 className="text-xl font-serif font-bold">Total</h3>
-                            <h3 className="text-xl font-bold text-accent-gold">₹{totalPrice.toLocaleString('en-IN')}</h3>
+                            <h3 className="text-xl font-bold text-accent-gold">₹{finalTotal.toLocaleString('en-IN')}</h3>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button
