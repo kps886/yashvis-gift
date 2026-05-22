@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Electronics', 'Fragrances', 'Bags & Purses', 'Toys & Games', 'Home & Kitchen']
+        enum: ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Nehru Jackets', 'Accessories']
     },
     images: [{
         type: String,
