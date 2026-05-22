@@ -88,11 +88,11 @@ const Drawer = ({ open, onClose, children }) => (
 );
 
 // ── Header ────────────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────
 const Header = ({ theme, toggleTheme, category, setCategory }) => {
     const { totalItems } = useContext(CartContext);
     const { wishlist } = useContext(WishlistContext);
-    const { user, logout, isLoggedIn, isAdmin,
-        isShopkeeper, isEmployee } = useAuth();
+    const { user, logout, isLoggedIn, isAdmin, isShopkeeper, isEmployee } = useAuth();
     const navigate = useNavigate();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -146,10 +146,10 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                     borderBottom: '1px solid var(--border-color)',
                 }}
             >
-                <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
-
-                    {/* Mobile Left: Hamburger */}
-                    <div className="flex items-center gap-3 md:hidden">
+                <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between relative">
+                    
+                    {/* ─── MOBILE/TABLET: Left (Hamburger) ─── */}
+                    <div className="flex items-center lg:hidden flex-1 justify-start">
                         <button
                             onClick={() => setDrawerOpen(true)}
                             className="p-2 -ml-2 hover:text-accent-gold transition-colors"
@@ -159,59 +159,61 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                         </button>
                     </div>
 
-                    {/* Desktop Left: Logo + Navigation Layout */}
-                    <div className="hidden md:flex items-center gap-10 flex-1">
-                        {/* Logo */}
-                        <Link to="/" className="flex-shrink-0">
-                            <img
-                                src="/suman-logo.png" // Path to your logo in the public folder
+                    {/* ─── MOBILE/TABLET: Center (Absolute Logo) ─── */}
+                    <div className="lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-center">
+                        <Link to="/">
+                            <img 
+                                src="/suman-logo.png" 
                                 alt="Monika Creation Logo"
-                                className="h-12 w-auto object-contain" // Adjusted height to look good in 20px header
+                                className="h-8 sm:h-10 w-auto object-contain" 
                             />
                         </Link>
+                    </div>
 
-                        {/* Categories */}
-                        <nav className="flex items-center gap-6">
+                    {/* ─── DESKTOP: Left (Logo) ─── */}
+                    {/* Using flex-1 ensures it acts as an equal bookend to the right section */}
+                    <div className="hidden lg:flex flex-1 justify-start items-center">
+                        <Link to="/" className="flex-shrink-0">
+                            <img 
+                                src="/suman-logo.png" 
+                                alt="Monika Creation Logo"
+                                className="h-10 xl:h-12 w-auto object-contain" 
+                            />
+                        </Link>
+                    </div>
+
+                    {/* ─── DESKTOP: Center (Navigation) ─── */}
+                    {/* This sits perfectly in the middle between the two flex-1 containers */}
+                    <nav className="hidden lg:flex justify-center items-center gap-4 xl:gap-8">
+                        <button
+                            onClick={() => handleCategoryClick('')}
+                            className={`text-xs xl:text-sm font-semibold tracking-wider uppercase transition-colors ${category === ''
+                                ? 'text-accent-gold'
+                                : 'text-text-secondary hover:text-text-primary'
+                                }`}
+                        >
+                            All
+                        </button>
+                        {CATEGORIES.map(cat => (
                             <button
-                                onClick={() => handleCategoryClick('')}
-                                className={`text-sm font-semibold tracking-wider uppercase transition-colors ${category === ''
-                                    ? 'text-accent-gold'
+                                key={cat}
+                                onClick={() => handleCategoryClick(cat)}
+                                className={`text-xs xl:text-sm font-semibold tracking-wider uppercase transition-colors whitespace-nowrap ${category === cat
+                                    ? 'text-accent-gold underline underline-offset-8 decoration-2'
                                     : 'text-text-secondary hover:text-text-primary'
                                     }`}
                             >
-                                All
+                                {cat}
                             </button>
-                            {CATEGORIES.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => handleCategoryClick(cat)}
-                                    className={`text-sm font-semibold tracking-wider uppercase transition-colors whitespace-nowrap ${category === cat
-                                        ? 'text-accent-gold underline underline-offset-8 decoration-2'
-                                        : 'text-text-secondary hover:text-text-primary'
-                                        }`}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
+                        ))}
+                    </nav>
 
-                    {/* Mobile Center: Logo */}
-                    <div className="md:hidden flex-1 text-center">
-                        <Link
-                            to="/"
-                            className="text-2xl font-serif text-accent-gold tracking-wide"
-                            style={{ fontFamily: "'Playfair Display', serif" }}
-                        >
-                            MonikaCreation
-                        </Link>
-                    </div>
-
-                    {/* Right Controls */}
-                    <div className="flex items-center gap-3 sm:gap-5 justify-end md:flex-none">
+                    {/* ─── DESKTOP & MOBILE: Right (Icons) ─── */}
+                    {/* flex-1 ensures the right side pushes back equally against the left side */}
+                    <div className="flex items-center gap-1 sm:gap-4 justify-end flex-1">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 hover:text-accent-gold transition-colors"
+                            className="p-1.5 sm:p-2 hover:text-accent-gold transition-colors"
                             aria-label="Toggle theme"
                         >
                             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -219,18 +221,18 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
 
                         {(!isLoggedIn || user?.role === 'user') && (
                             <>
-                                <Link to="/wishlist" className="relative p-2 hover:text-accent-gold transition-colors">
+                                <Link to="/wishlist" className="relative p-1.5 sm:p-2 hover:text-accent-gold transition-colors">
                                     <HeartIcon filled={false} />
                                     {wishlist.length > 0 && (
-                                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                                        <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                                             {wishlist.length > 9 ? '9+' : wishlist.length}
                                         </span>
                                     )}
                                 </Link>
-                                <Link to="/cart" className="relative p-2 hover:text-accent-gold transition-colors">
+                                <Link to="/cart" className="relative p-1.5 sm:p-2 hover:text-accent-gold transition-colors">
                                     <CartIcon />
                                     {totalItems > 0 && (
-                                        <span className="absolute top-0 right-0 bg-accent-gold text-primary-bg text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                                        <span className="absolute top-0 right-0 bg-accent-gold text-primary-bg text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                                             {totalItems > 9 ? '9+' : totalItems}
                                         </span>
                                     )}
@@ -242,7 +244,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                             <div className="relative" ref={userMenuRef}>
                                 <button
                                     onClick={() => setUserMenuOpen(o => !o)}
-                                    className="flex items-center gap-2 p-2 hover:text-accent-gold transition-colors"
+                                    className="flex items-center gap-2 p-1.5 sm:p-2 hover:text-accent-gold transition-colors"
                                 >
                                     <UserIcon />
                                     <span className="hidden lg:block text-sm font-semibold max-w-[90px] truncate">
@@ -280,7 +282,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                 )}
                             </div>
                         ) : (
-                            <Link to="/login" className="flex items-center gap-2 p-2 hover:text-accent-gold transition-colors">
+                            <Link to="/login" className="flex items-center gap-2 p-1.5 sm:p-2 hover:text-accent-gold transition-colors">
                                 <UserIcon />
                                 <span className="hidden sm:block text-sm font-semibold">Sign In</span>
                             </Link>
@@ -289,17 +291,30 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                 </div>
             </header>
 
-            {/* Mobile sliding drawer - Kept exact same logic, just make sure to update your CATEGORIES inside it if you hardcoded them there */}
+            {/* Mobile sliding drawer */}
             <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-                {/* Drawer header */}
-                <div className="flex items-center justify-between px-5 h-20 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <span className="text-xl font-serif text-accent-gold" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        MonikaCreation
-                    </span>
+                {/* ... (Keep the exact same Drawer code from the previous step) ... */}
+                <div className="flex items-center justify-between px-5 h-16 sm:h-20 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <Link to="/" onClick={() => setDrawerOpen(false)}>
+                        <img 
+                            src="/suman-logo.png" 
+                            alt="Monika Creation Logo"
+                            className="h-8 sm:h-10 w-auto object-contain"
+                        />
+                    </Link>
                     <button onClick={() => setDrawerOpen(false)} className="p-2 hover:text-accent-gold transition-colors text-xl leading-none">✕</button>
                 </div>
 
-                {/* Scrollable content */}
+                {isLoggedIn && (
+                    <div className="px-5 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--primary-bg)' }}>
+                        <p className="font-semibold text-sm truncate">{user.name}</p>
+                        <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold border rounded uppercase bg-accent-gold/10 text-accent-gold border-accent-gold/40">
+                            {user.role}
+                        </span>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto">
                     <div className="px-5 py-6">
                         <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Shop Categories</p>
@@ -315,7 +330,55 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                             ))}
                         </div>
                     </div>
-                    {/* ... Rest of your drawer nav links remain the same ... */}
+
+                    <div className="px-5 py-4" style={{ borderTop: '1px solid var(--border-color)' }}>
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-3">Account</p>
+                        <div className="space-y-1">
+                            {isLoggedIn ? (
+                                <>
+                                    {(isAdmin || isShopkeeper || isEmployee) && (
+                                        <Link to={getDashboardPath()} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                                            Dashboard
+                                        </Link>
+                                    )}
+                                    {user?.role === 'user' && (
+                                        <>
+                                            <Link to="/cart" onClick={() => setDrawerOpen(false)} className="flex items-center justify-between px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                                                <span>My Bag</span>
+                                                {totalItems > 0 && <span className="bg-accent-gold text-primary-bg text-xs font-bold rounded-full px-2 py-0.5">{totalItems}</span>}
+                                            </Link>
+                                            <Link to="/my-orders" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                                                My Orders
+                                            </Link>
+                                            <Link to="/wishlist" onClick={() => setDrawerOpen(false)} className="flex items-center justify-between px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                                                <span>Wishlist</span>
+                                                {wishlist.length > 0 && <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{wishlist.length}</span>}
+                                            </Link>
+                                            <Link to="/profile" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                                                My Profile
+                                            </Link>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <Link to="/login" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors text-accent-gold">
+                                    Sign In / Register
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-5 py-4 flex-shrink-0 space-y-3" style={{ borderTop: '1px solid var(--border-color)' }}>
+                    <button onClick={() => { toggleTheme(); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-sm font-semibold hover:bg-primary-bg transition-colors">
+                        {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                    {isLoggedIn && (
+                        <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-sm font-semibold text-red-400 hover:bg-primary-bg transition-colors">
+                            Sign Out
+                        </button>
+                    )}
                 </div>
             </Drawer>
         </>
