@@ -21,6 +21,7 @@ router.get('/', async (req, res) => {
                 { name: { $regex: req.query.search, $options: 'i' } },
                 { description: { $regex: req.query.search, $options: 'i' } },
                 { category: { $regex: req.query.search, $options: 'i' } },
+                { tags: { $regex: req.query.search, $options: 'i' } },
             ];
         }
 

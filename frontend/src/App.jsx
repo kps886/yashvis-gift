@@ -58,14 +58,6 @@ const MenuIcon = () => (
     </svg>
 );
 
-// ── Role badge colours ────────────────────────────────────────
-const ROLE_COLORS = {
-    admin: 'bg-red-500/20 text-red-400 border-red-500/40',
-    shopkeeper: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
-    employee: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
-    user: 'bg-green-500/20 text-green-400 border-green-500/40',
-};
-
 // ── Drawer overlay ────────────────────────────────────────────
 const Drawer = ({ open, onClose, children }) => (
     <>
@@ -145,7 +137,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                 }}
             >
                 <div className="px-4 h-16 sm:h-20 flex items-center justify-between relative">
-                    
+
                     {/* ─── MOBILE/TABLET: Left (Hamburger) ─── */}
                     <div className="flex items-center lg:hidden flex-1 justify-start mobile-logo">
                         <button
@@ -160,10 +152,10 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                     {/* ─── MOBILE/TABLET: Center (Logo) ─── */}
                     <div className="lg:hidden flex justify-center tab-logo">
                         <Link to="/">
-                            <img 
-                                src="/suman-logo.png" 
+                            <img
+                                src="/suman-logo.png"
                                 alt="Monika Creation Logo"
-                                className="h-full sm:h-10 w-auto object-contain" 
+                                className="h-full sm:h-10 w-auto object-contain"
                             />
                         </Link>
                     </div>
@@ -171,10 +163,10 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                     {/* ─── DESKTOP: Left (Logo) ─── */}
                     <div className="hidden lg:flex flex-1 justify-start items-center pc-logo">
                         <Link to="/" className="flex-shrink-0">
-                            <img 
-                                src="/suman-logo.png" 
+                            <img
+                                src="/suman-logo.png"
                                 alt="Monika Creation Logo"
-                                className="h-100 w-auto object-contain" 
+                                className="h-100 w-auto object-contain"
                             />
                         </Link>
                     </div>
@@ -206,7 +198,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
 
                     {/* ─── DESKTOP & MOBILE: Right (Icons) ─── */}
                     <div className="flex items-center gap-1 sm:gap-4 justify-end flex-1">
-                        
+
                         {/* THEME TOGGLE: Hidden on mobile/tablet */}
                         <button
                             onClick={toggleTheme}
@@ -227,7 +219,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                                         </span>
                                     )}
                                 </Link>
-                                
+
                                 <Link to="/cart" className="relative p-1.5 sm:p-2 hover:text-accent-gold transition-colors">
                                     <CartIcon />
                                     {totalItems > 0 && (
@@ -295,8 +287,8 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                 {/* Drawer header */}
                 <div className="flex items-center justify-between px-5 h-16 sm:h-20 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <Link to="/" onClick={() => setDrawerOpen(false)}>
-                        <img 
-                            src="/suman-logo.png" 
+                        <img
+                            src="/suman-logo.png"
                             alt="Monika Creation Logo"
                             className="h-8 sm:h-10 w-auto object-contain"
                         />
@@ -501,7 +493,7 @@ const SORT_OPTIONS = [
     { value: 'name_asc', label: 'Name: A → Z' },
 ];
 
-const HomePage = ({ products, loading, error, category, search, setSearch,
+const HomePage = ({ products, loading, error, category, setCategory, search, setSearch,
     sort, setSort, page, setPage, pagination }) => (
     <div>
         {/* Hero */}
@@ -516,11 +508,17 @@ const HomePage = ({ products, loading, error, category, search, setSearch,
                     <p className="text-xl text-gray-300 mt-4">
                         Curated collections of luxury and style.
                     </p>
-                    <Link to="/" className="mt-8 inline-block bg-accent-gold text-primary-bg
+                    <button
+                        onClick={() => {
+                            setCategory('');
+                            setSearch('New Arrival');
+                        }}
+                        className="mt-8 inline-block bg-accent-gold text-primary-bg
                         px-8 py-3 font-bold uppercase tracking-wider hover:bg-yellow-500
-                        transition-colors">
+                        transition-colors"
+                    >
                         Shop New Arrivals
-                    </Link>
+                    </button>
                 </div>
             </section>
         )}
@@ -827,6 +825,7 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                         loading={loading}
                                         error={error}
                                         category={category}
+                                        setCategory={setCategory}
                                         search={search}
                                         setSearch={setSearch}
                                         sort={sort}
