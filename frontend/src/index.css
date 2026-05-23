@@ -62,3 +62,10 @@ html {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.6);
 }
+
+.mobile-logo,.tab-logo,.pc-logo {
+  height: 100%;
+  img{
+    height: 100%;
+  }
+}

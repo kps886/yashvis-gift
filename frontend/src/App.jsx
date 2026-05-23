@@ -87,8 +87,6 @@ const Drawer = ({ open, onClose, children }) => (
     </>
 );
 
-// ── Header ────────────────────────────────────────────────────
-// ── Header ────────────────────────────────────────────────────
 const Header = ({ theme, toggleTheme, category, setCategory }) => {
     const { totalItems } = useContext(CartContext);
     const { wishlist } = useContext(WishlistContext);
@@ -146,10 +144,10 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                     borderBottom: '1px solid var(--border-color)',
                 }}
             >
-                <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between relative">
+                <div className="px-4 h-16 sm:h-20 flex items-center justify-between relative">
                     
                     {/* ─── MOBILE/TABLET: Left (Hamburger) ─── */}
-                    <div className="flex items-center lg:hidden flex-1 justify-start">
+                    <div className="flex items-center lg:hidden flex-1 justify-start mobile-logo">
                         <button
                             onClick={() => setDrawerOpen(true)}
                             className="p-2 -ml-2 hover:text-accent-gold transition-colors"
@@ -160,24 +158,24 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
                     </div>
 
                     {/* ─── MOBILE/TABLET: Center (Absolute Logo) ─── */}
-                    <div className="lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-center">
+                    <div className="lg:hidden flex justify-center tab-logo">
                         <Link to="/">
                             <img 
                                 src="/suman-logo.png" 
                                 alt="Monika Creation Logo"
-                                className="h-8 sm:h-10 w-auto object-contain" 
+                                className="h-full sm:h-10 w-auto object-contain" 
                             />
                         </Link>
                     </div>
 
                     {/* ─── DESKTOP: Left (Logo) ─── */}
                     {/* Using flex-1 ensures it acts as an equal bookend to the right section */}
-                    <div className="hidden lg:flex flex-1 justify-start items-center">
+                    <div className="hidden lg:flex flex-1 justify-start items-center pc-logo">
                         <Link to="/" className="flex-shrink-0">
                             <img 
                                 src="/suman-logo.png" 
                                 alt="Monika Creation Logo"
-                                className="h-10 xl:h-12 w-auto object-contain" 
+                                className="h-100 w-auto object-contain" 
                             />
                         </Link>
                     </div>
