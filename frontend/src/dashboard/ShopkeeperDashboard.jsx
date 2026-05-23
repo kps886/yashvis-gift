@@ -241,7 +241,8 @@ const ProductsPanel = ({ user }) => {
         setLoading(true);
         try {
             const { data } = await api.get('/api/products');
-            setProducts(data);
+            console.log('Fetched products:', data);
+            setProducts(data.products);
         } catch { setError('Failed to fetch products'); }
         setLoading(false);
     };
