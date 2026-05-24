@@ -51,6 +51,7 @@ router.post('/create-payment', protect, async (req, res) => {
                 image: product.images?.[0] || '',
                 price: product.price,
                 quantity: item.quantity,
+                size: item.size || null,
             });
         }
 

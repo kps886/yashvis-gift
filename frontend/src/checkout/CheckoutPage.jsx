@@ -88,6 +88,7 @@ const OrderSummary = ({ cartItems, subtotal, deliveryFee, discount, total, promo
                     />
                     <div className="flex-grow min-w-0">
                         <p className="text-sm font-semibold truncate">{item.name}</p>
+                        {item.size && <p className="text-xs text-text-secondary uppercase">Size: {item.size}</p>}
                         <p className="text-xs text-text-secondary">Qty: {item.qty}</p>
                     </div>
                     <p className="text-sm font-semibold flex-shrink-0">
@@ -262,6 +263,7 @@ const CheckoutPage = () => {
                 items: cartItems.map(item => ({
                     product:  item._id,
                     quantity: item.qty,
+                    size:     item.size || null,
                 })),
                 shippingAddress: address,
                 promoCode: promoResult?.code || null,
@@ -270,7 +272,7 @@ const CheckoutPage = () => {
             // 3. Open Razorpay checkout
             const options = {
                 key:         data.keyId,
-                amount:      data.amount,          // paise
+                amount:      data.amount,
                 currency:    data.currency,
                 name:        'MonikaCreation',
                 description: 'Order Payment',

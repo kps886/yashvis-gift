@@ -49,6 +49,8 @@ const ProductDetailsPage = () => {
     const [loading, setLoading] = useState(true);
     const [added, setAdded] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
+    const [selectedSize, setSelectedSize] = useState('');
+    const [sizeError, setSizeError] = useState(false);
 
     // Review form
     const [rating, setRating] = useState(0);
@@ -70,7 +72,14 @@ const ProductDetailsPage = () => {
     }, [fetchProduct]);
 
     const handleAddToCart = () => {
-        addToCart(product);
+        const hasVariations = product.variations?.length > 0;
+
+        if (hasVariations && !selectedSize) {
+            setSizeError(true);
+            return;
+        }
+        setSizeError(false);
+        addToCart(product, selectedSize);
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
     };
@@ -141,8 +150,8 @@ const ProductDetailsPage = () => {
                             {product.images.map((img, i) => (
                                 <button key={i} onClick={() => setSelectedImage(i)}
                                     className={`w-16 h-16 border-2 overflow-hidden transition-colors ${selectedImage === i
-                                            ? 'border-accent-gold'
-                                            : 'border-border-color hover:border-text-secondary'
+                                        ? 'border-accent-gold'
+                                        : 'border-border-color hover:border-text-secondary'
                                         }`}>
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
@@ -200,14 +209,29 @@ const ProductDetailsPage = () => {
                         <div className="mb-6 space-y-3">
                             {product.variations.map(v => (
                                 <div key={v.name}>
-                                    <p className="font-bold text-xs uppercase tracking-wider mb-2">
-                                        {v.name}
-                                    </p>
+                                    <div className="flex justify-between items-end mb-2">
+                                        <p className="font-bold text-xs uppercase tracking-wider">
+                                            Select {v.name}
+                                        </p>
+                                        {sizeError && (
+                                            <p className="text-xs text-red-500 font-bold animate-pulse">
+                                                Please select a {v.name.toLowerCase()}
+                                            </p>
+                                        )}
+                                    </div>
                                     <div className="flex flex-wrap gap-2">
                                         {v.options.map(opt => (
-                                            <button key={opt}
-                                                className="px-4 py-1 border border-border-color
-                                                    hover:border-accent-gold transition-colors text-sm">
+                                            <button
+                                                key={opt}
+                                                onClick={() => {
+                                                    setSelectedSize(opt);
+                                                    setSizeError(false);
+                                                }}
+                                                className={`px-4 py-2 border transition-colors text-sm font-semibold ${selectedSize === opt
+                                                        ? 'border-accent-gold bg-accent-gold text-primary-bg'
+                                                        : 'border-border-color hover:border-accent-gold text-text-primary'
+                                                    }`}
+                                            >
                                                 {opt}
                                             </button>
                                         ))}
