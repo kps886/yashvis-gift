@@ -57,12 +57,13 @@ const CartPage = () => {
                                 />
                                 <div className="flex-grow min-w-0">
                                     <h3 className="font-serif text-lg truncate">{item.name}</h3>
+                                    {item.size && <p className="text-xs text-text-secondary mt-1 font-semibold uppercase tracking-wider">Size: {item.size}</p>}
                                     <p className="text-accent-gold font-semibold">₹{item.price.toLocaleString('en-IN')}</p>
                                 </div>
                                 {/* Qty controls */}
                                 <div className="flex items-center border border-border-color">
                                     <button
-                                        onClick={() => updateQty(item._id, item.qty - 1)}
+                                        onClick={() => updateQty(item._id, item.size, item.qty - 1)}
                                         className="px-3 py-1 hover:bg-primary-bg transition-colors font-bold"
                                     >
                                         −
@@ -71,7 +72,7 @@ const CartPage = () => {
                                         {item.qty}
                                     </span>
                                     <button
-                                        onClick={() => updateQty(item._id, item.qty + 1)}
+                                        onClick={() => updateQty(item._id, item.size, item.qty + 1)}
                                         className="px-3 py-1 hover:bg-primary-bg transition-colors font-bold"
                                     >
                                         +
@@ -81,7 +82,7 @@ const CartPage = () => {
                                     ₹{(item.price * item.qty).toLocaleString('en-IN')}
                                 </p>
                                 <button
-                                    onClick={() => removeFromCart(item._id)}
+                                    onClick={() => removeFromCart(item._id, item.size)}
                                     className="text-red-400 hover:text-red-300 transition-colors p-1 flex-shrink-0"
                                 >
                                     <TrashIcon />

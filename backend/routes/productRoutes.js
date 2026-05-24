@@ -75,12 +75,14 @@ router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
         }
 
         // 4. If we get here, the upload succeeded. Now we do the database logic.
-        try {;
+        try {
+            ;
 
-            const { name, description, price, category, stock, tags } = req.body;
+            const { name, description, price, category, stock, tags, variations } = req.body;
 
             const imageUrls = req.files ? req.files.map(file => file.path) : [];
             const parsedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+            const parsedVariations = variations ? JSON.parse(variations) : [];
 
             const product = await Product.create({
                 name,
@@ -90,6 +92,7 @@ router.post('/', protect, shopkeeperAndAbove, async (req, res) => {
                 images: imageUrls,
                 stock: Number(stock) || 0,
                 tags: parsedTags,
+                variations: parsedVariations,
                 createdBy: req.user._id,
             });
             res.status(201).json(product);
@@ -110,7 +113,7 @@ router.put('/:id', protect, employeeAndAbove, async (req, res) => {
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: 'Product not found' });
 
-            const { name, description, price, category, stock, tags, existingImages } = req.body;
+            const { name, description, price, category, stock, tags, existingImages, variations } = req.body;
 
             const newImageUrls = req.files ? req.files.map(file => file.path) : [];
             const parsedExistingImages = existingImages ? JSON.parse(existingImages) : [];
@@ -126,7 +129,9 @@ router.put('/:id', protect, employeeAndAbove, async (req, res) => {
             if (tags !== undefined) {
                 product.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
             }
-
+            if (variations !== undefined) {
+                product.variations = JSON.parse(variations); // <-- Update it
+            }
             if (combinedImages.length > 0) {
                 product.images = combinedImages;
             } else if (existingImages === "[]" && newImageUrls.length === 0) {
@@ -178,15 +183,15 @@ router.post('/:id/reviews', protect, async (req, res) => {
         }
 
         product.reviews.push({
-            user:    req.user._id,
-            name:    req.user.name,
-            rating:  Number(rating),
+            user: req.user._id,
+            name: req.user.name,
+            rating: Number(rating),
             comment: comment.trim(),
         });
 
         // Store avg rating and count on the product for easy access
-        product.avgRating    = product.reviews.reduce((a, r) => a + r.rating, 0) / product.reviews.length;
-        product.reviewCount  = product.reviews.length;
+        product.avgRating = product.reviews.reduce((a, r) => a + r.rating, 0) / product.reviews.length;
+        product.reviewCount = product.reviews.length;
 
         await product.save();
         res.status(201).json({ message: 'Review added' });

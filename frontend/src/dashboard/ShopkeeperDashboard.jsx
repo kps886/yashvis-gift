@@ -5,26 +5,26 @@ import { useAuth } from '../auth/AuthContext';
 const CATEGORIES = ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Nehru Jackets', 'Accessories'];
 
 const ORDER_STATUS_STYLES = {
-    pending:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+    pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
     processing: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
-    shipped:    'bg-purple-500/20 text-purple-400 border-purple-500/40',
-    delivered:  'bg-green-500/20 text-green-400 border-green-500/40',
-    cancelled:  'bg-red-500/20 text-red-400 border-red-500/40',
+    shipped: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
+    delivered: 'bg-green-500/20 text-green-400 border-green-500/40',
+    cancelled: 'bg-red-500/20 text-red-400 border-red-500/40',
 };
 
 const emptyForm = {
-    name: '', description: '', price: '', category: 'Electronics',
+    name: '', description: '', price: '', category: 'Kurta Sets',
     images: [], stock: '', tags: '', existingImages: [],
+    sizes: '',
 };
 
 const Tab = ({ label, active, onClick, badge }) => (
     <button onClick={onClick}
         className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase
-            tracking-wider transition-colors border-b-2 whitespace-nowrap ${
-            active
+            tracking-wider transition-colors border-b-2 whitespace-nowrap ${active
                 ? 'border-accent-gold text-accent-gold'
                 : 'border-transparent text-text-secondary hover:text-text-primary'
-        }`}>
+            }`}>
         {label}
         {badge > 0 && (
             <span className="bg-accent-gold text-primary-bg text-xs font-bold
@@ -37,16 +37,16 @@ const Tab = ({ label, active, onClick, badge }) => (
 
 // ── Orders panel (shared with admin) ─────────────────────────
 const OrdersPanel = () => {
-    const [orders, setOrders]         = useState([]);
-    const [loading, setLoading]       = useState(true);
-    const [expanded, setExpanded]     = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState(null);
     const [statusEdit, setStatusEdit] = useState({});
-    const [updating, setUpdating]     = useState(null);
-    const [error, setError]           = useState('');
-    const [success, setSuccess]       = useState('');
-    const [filter, setFilter]         = useState('all');
+    const [updating, setUpdating] = useState(null);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [filter, setFilter] = useState('all');
 
-    const STATUSES = ['pending','processing','shipped','delivered','cancelled'];
+    const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -64,7 +64,7 @@ const OrdersPanel = () => {
         setUpdating(orderId); setError(''); setSuccess('');
         try {
             await api.put(`/api/orders/${orderId}/status`, {
-                orderStatus:    edit.status,
+                orderStatus: edit.status,
                 trackingNumber: edit.tracking || undefined,
             });
             setSuccess('Order updated successfully');
@@ -78,18 +78,17 @@ const OrdersPanel = () => {
 
     return (
         <div>
-            {error   && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/40 text-green-400 rounded text-sm">{success}</div>}
 
             <div className="flex gap-2 flex-wrap mb-5">
                 {['all', ...STATUSES].map(s => (
                     <button key={s} onClick={() => setFilter(s)}
                         className={`px-3 py-1.5 text-xs font-bold uppercase rounded border
-                            transition-colors ${
-                            filter === s
+                            transition-colors ${filter === s
                                 ? 'bg-accent-gold text-primary-bg border-accent-gold'
                                 : 'border-border-color text-text-secondary hover:border-text-secondary'
-                        }`}>
+                            }`}>
                         {s} ({s === 'all' ? orders.length : orders.filter(o => o.orderStatus === s).length})
                     </button>
                 ))}
@@ -172,51 +171,51 @@ const OrdersPanel = () => {
                                     </div>
 
                                     {order.orderStatus !== 'delivered' &&
-                                     order.orderStatus !== 'cancelled' && (
-                                        <div className="p-3 rounded border border-border-color bg-primary-bg">
-                                            <p className="text-xs font-bold uppercase tracking-wider
+                                        order.orderStatus !== 'cancelled' && (
+                                            <div className="p-3 rounded border border-border-color bg-primary-bg">
+                                                <p className="text-xs font-bold uppercase tracking-wider
                                                 text-text-secondary mb-3">
-                                                Update Status
-                                            </p>
-                                            <div className="flex flex-col sm:flex-row gap-2">
-                                                <select
-                                                    value={statusEdit[order._id]?.status || order.orderStatus}
-                                                    onChange={e => setStatusEdit(prev => ({
-                                                        ...prev,
-                                                        [order._id]: { ...prev[order._id], status: e.target.value },
-                                                    }))}
-                                                    className="flex-1 p-2 bg-secondary-bg border
+                                                    Update Status
+                                                </p>
+                                                <div className="flex flex-col sm:flex-row gap-2">
+                                                    <select
+                                                        value={statusEdit[order._id]?.status || order.orderStatus}
+                                                        onChange={e => setStatusEdit(prev => ({
+                                                            ...prev,
+                                                            [order._id]: { ...prev[order._id], status: e.target.value },
+                                                        }))}
+                                                        className="flex-1 p-2 bg-secondary-bg border
                                                         border-border-color rounded text-sm
                                                         focus:outline-none focus:border-accent-gold"
-                                                >
-                                                    {STATUSES.map(s => (
-                                                        <option key={s} value={s} className="capitalize">{s}</option>
-                                                    ))}
-                                                </select>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Tracking number (optional)"
-                                                    value={statusEdit[order._id]?.tracking || order.trackingNumber || ''}
-                                                    onChange={e => setStatusEdit(prev => ({
-                                                        ...prev,
-                                                        [order._id]: { ...prev[order._id], tracking: e.target.value },
-                                                    }))}
-                                                    className="flex-1 p-2 bg-secondary-bg border
+                                                    >
+                                                        {STATUSES.map(s => (
+                                                            <option key={s} value={s} className="capitalize">{s}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Tracking number (optional)"
+                                                        value={statusEdit[order._id]?.tracking || order.trackingNumber || ''}
+                                                        onChange={e => setStatusEdit(prev => ({
+                                                            ...prev,
+                                                            [order._id]: { ...prev[order._id], tracking: e.target.value },
+                                                        }))}
+                                                        className="flex-1 p-2 bg-secondary-bg border
                                                         border-border-color rounded text-sm
                                                         focus:outline-none focus:border-accent-gold"
-                                                />
-                                                <button
-                                                    onClick={() => handleUpdateStatus(order._id)}
-                                                    disabled={updating === order._id}
-                                                    className="px-5 py-2 bg-accent-gold text-primary-bg
+                                                    />
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(order._id)}
+                                                        disabled={updating === order._id}
+                                                        className="px-5 py-2 bg-accent-gold text-primary-bg
                                                         font-bold text-sm hover:bg-yellow-500 transition-colors
                                                         disabled:opacity-50 rounded"
-                                                >
-                                                    {updating === order._id ? 'Saving...' : 'Update'}
-                                                </button>
+                                                    >
+                                                        {updating === order._id ? 'Saving...' : 'Update'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
                                 </div>
                             )}
                         </div>
@@ -230,12 +229,12 @@ const OrdersPanel = () => {
 // ── Products panel ────────────────────────────────────────────
 const ProductsPanel = ({ user }) => {
     const [products, setProducts] = useState([]);
-    const [loading, setLoading]   = useState(true);
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [form, setForm]         = useState(emptyForm);
-    const [error, setError]       = useState('');
-    const [success, setSuccess]   = useState('');
+    const [form, setForm] = useState(emptyForm);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -248,12 +247,15 @@ const ProductsPanel = ({ user }) => {
     };
     useEffect(() => { fetchProducts(); }, []);
 
-    const openAddForm  = () => { setEditingProduct(null); setForm(emptyForm); setShowForm(true); setError(''); setSuccess(''); };
+    const openAddForm = () => { setEditingProduct(null); setForm(emptyForm); setShowForm(true); setError(''); setSuccess(''); };
     const openEditForm = (p) => {
         setEditingProduct(p);
-        setForm({ name: p.name, description: p.description, price: p.price,
+        const existingSizes = p.variations?.find(v => v.name === 'Size')?.options.join(', ') || '';
+        setForm({
+            name: p.name, description: p.description, price: p.price,
             category: p.category, images: [], existingImages: p.images || [],
-            stock: p.stock, tags: p.tags ? p.tags.join(', ') : '' });
+            stock: p.stock, tags: p.tags ? p.tags.join(', ') : '', sizes: existingSizes
+        });
         setShowForm(true); setError(''); setSuccess('');
     };
 
@@ -266,6 +268,11 @@ const ProductsPanel = ({ user }) => {
         formData.append('category', form.category);
         formData.append('stock', parseInt(form.stock));
         formData.append('tags', form.tags.split(',').map(s => s.trim()).filter(Boolean).join(','));
+        const formattedVariations = form.sizes.trim() ? [{
+            name: 'Size',
+            options: form.sizes.split(',').map(s => s.trim()).filter(Boolean)
+        }] : [];
+        formData.append('variations', JSON.stringify(formattedVariations));
         form.images.forEach(file => formData.append('images', file));
         if (editingProduct) formData.append('existingImages', JSON.stringify(form.existingImages));
 
@@ -291,7 +298,7 @@ const ProductsPanel = ({ user }) => {
 
     return (
         <div>
-            {error   && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/40 text-green-400 rounded text-sm">{success}</div>}
 
             <div className="flex justify-between items-center mb-4">
@@ -348,6 +355,10 @@ const ProductsPanel = ({ user }) => {
                             value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })}
                             className="sm:col-span-2 p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold text-sm"
                         />
+                        <input type="text" placeholder='Sizes available: "S, M, L, XL, XXL" (comma-separated)'
+                            value={form.sizes} onChange={e => setForm({ ...form, sizes: e.target.value })}
+                            className="sm:col-span-2 p-2 bg-primary-bg border border-border-color rounded focus:outline-none focus:border-accent-gold text-sm"
+                        />
                         <div className="sm:col-span-2 flex gap-3">
                             <button type="submit"
                                 className="bg-accent-gold text-primary-bg px-5 py-2 text-sm font-bold hover:bg-yellow-500 transition-colors">
@@ -369,7 +380,7 @@ const ProductsPanel = ({ user }) => {
                     <table className="w-full text-sm min-w-[520px]">
                         <thead>
                             <tr className="border-b border-border-color text-text-secondary uppercase tracking-wider text-xs">
-                                {['Product','Category','Price','Stock','Actions'].map(h => (
+                                {['Product', 'Category', 'Price', 'Stock', 'Actions'].map(h => (
                                     <th key={h} className="text-left py-3 px-4">{h}</th>
                                 ))}
                             </tr>
@@ -420,19 +431,19 @@ const ProductsPanel = ({ user }) => {
 
 // ── Main ShopkeeperDashboard ──────────────────────────────────
 const ShopkeeperDashboard = () => {
-    const { user }      = useAuth();
+    const { user } = useAuth();
     const [tab, setTab] = useState('orders');
 
     const [counts, setCounts] = useState({ products: 0, orders: 0, pending: 0, outOfStock: 0 });
     useEffect(() => {
         Promise.all([api.get('/api/products'), api.get('/api/orders')]).then(([p, o]) => {
             setCounts({
-                products:   p.data.length,
-                orders:     o.data.length,
-                pending:    o.data.filter(x => x.orderStatus === 'pending').length,
+                products: p.data.length,
+                orders: o.data.length,
+                pending: o.data.filter(x => x.orderStatus === 'pending').length,
                 outOfStock: p.data.filter(x => x.stock === 0).length,
             });
-        }).catch(() => {});
+        }).catch(() => { });
     }, [tab]);
 
     return (
@@ -454,10 +465,10 @@ const ShopkeeperDashboard = () => {
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
                 {[
-                    { label: 'Total Orders',  value: counts.orders,     color: 'text-blue-400' },
-                    { label: 'Pending',        value: counts.pending,    color: 'text-yellow-400' },
-                    { label: 'Total Products', value: counts.products,   color: 'text-accent-gold' },
-                    { label: 'Out of Stock',   value: counts.outOfStock, color: 'text-red-400' },
+                    { label: 'Total Orders', value: counts.orders, color: 'text-blue-400' },
+                    { label: 'Pending', value: counts.pending, color: 'text-yellow-400' },
+                    { label: 'Total Products', value: counts.products, color: 'text-accent-gold' },
+                    { label: 'Out of Stock', value: counts.outOfStock, color: 'text-red-400' },
                 ].map(s => (
                     <div key={s.label} className="bg-secondary-bg border border-border-color p-4 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -468,12 +479,12 @@ const ShopkeeperDashboard = () => {
 
             {/* Tabs */}
             <div className="flex border-b border-border-color mb-6 overflow-x-auto">
-                <Tab label="Orders"   active={tab === 'orders'}   onClick={() => setTab('orders')}
+                <Tab label="Orders" active={tab === 'orders'} onClick={() => setTab('orders')}
                     badge={counts.pending} />
                 <Tab label="Products" active={tab === 'products'} onClick={() => setTab('products')} />
             </div>
 
-            {tab === 'orders'   && <OrdersPanel />}
+            {tab === 'orders' && <OrdersPanel />}
             {tab === 'products' && <ProductsPanel user={user} />}
         </div>
     );
