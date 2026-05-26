@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
 
-const CATEGORIES = ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Nehru Jackets', 'Accessories'];
+const CATEGORIES = ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Modi Jackets', 'Accessories'];
 
 const ORDER_STATUS_STYLES = {
     pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',

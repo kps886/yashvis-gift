@@ -2,6 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { protect, adminOnly, shopkeeperAndAbove } from '../middleware/authMiddleware.js';
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -340,5 +342,79 @@ router.post('/wishlist/:productId', protect, async (req, res) => {
     }
 });
 
+// @desc    Forgot Password
+// @route   POST /api/users/forgotpassword
+// @access  Public
+router.post('/forgotpassword', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Please provide an email address' });
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            // Return 200 even if user doesn't exist for security (prevents email enumeration)
+            return res.status(200).json({ message: 'If an account exists, a reset email has been sent.' });
+        }
+
+        // Get reset token (generates and hashes it, but doesn't save to DB yet)
+        const resetToken = user.getResetPasswordToken();
+        await user.save({ validateBeforeSave: false });
+
+        // Create reset URL (pointing to your React frontend)
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+        try {
+            await sendPasswordResetEmail(user.email, user.name, resetUrl);
+            res.status(200).json({ message: 'Email sent' });
+        } catch (err) {
+            // If email fails, clear the token from DB so they can try again
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save({ validateBeforeSave: false });
+            return res.status(500).json({ message: 'Email could not be sent' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @desc    Reset Password
+// @route   PUT /api/users/resetpassword/:token
+// @access  Public
+router.put('/resetpassword/:token', async (req, res) => {
+    try {
+        // Hash the token from the URL to compare it with the hashed token in DB
+        const resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
+
+        // Find user by token AND ensure token hasn't expired
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired password reset token' });
+        }
+
+        if (!req.body.password || req.body.password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters' });
+        }
+
+        // Set new password (the pre-save hook in User.js will hash it)
+        user.password = req.body.password;
+        
+        // Clear reset token fields
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successful. Please log in.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 export default router;

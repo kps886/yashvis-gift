@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Nehru Jackets', 'Accessories']
+        enum: ['Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Modi Jackets', 'Accessories']
     },
     images: [{
         type: String,

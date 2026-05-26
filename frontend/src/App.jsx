@@ -16,6 +16,8 @@ import MyOrdersPage from './orders/MyOrdersPage';
 import ProfilePage from './profile/ProfilePage';
 import { WishlistProvider, WishlistContext } from './wishlist/WishlistContext';
 import WishlistPage from './wishlist/WishlistPage';
+import ForgotPasswordPage from './login/ForgotPasswordPage';
+import ResetPasswordPage from './login/ResetPasswordPage';
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -89,7 +91,7 @@ const Header = ({ theme, toggleTheme, category, setCategory }) => {
     const userMenuRef = useRef(null);
 
     const CATEGORIES = [
-        'Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Nehru Jackets', 'Accessories'
+        'Kurta Sets', 'Short Kurtas', 'Sherwanis', 'Modi Jackets', 'Accessories'
     ];
 
     useEffect(() => {
@@ -486,6 +488,7 @@ const ProductCard = ({ product }) => {
 };
 
 // ── Homepage ──────────────────────────────────────────────────
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest First' },
     { value: 'price_asc', label: 'Price: Low → High' },
@@ -494,190 +497,273 @@ const SORT_OPTIONS = [
 ];
 
 const HomePage = ({ products, loading, error, category, setCategory, search, setSearch,
-    sort, setSort, page, setPage, pagination }) => (
-    <div>
-        {/* Hero */}
-        {!category && !search && page === 1 && (
-            <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800
-                to-gray-900 flex items-center justify-center text-center px-4">
-                <div>
-                    <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg"
-                        style={{ fontFamily: "'Playfair Display', serif" }}>
-                        Discover Your Charm
-                    </h1>
-                    <p className="text-xl text-gray-300 mt-4">
-                        Curated collections of luxury and style.
-                    </p>
-                    <button
-                        onClick={() => {
-                            setCategory('');
-                            setSearch('New Arrival');
-                        }}
-                        className="mt-8 inline-block bg-accent-gold text-primary-bg
-                        px-8 py-3 font-bold uppercase tracking-wider hover:bg-yellow-500
-                        transition-colors"
-                    >
-                        Shop New Arrivals
-                    </button>
+    sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter }) => {
+    const [localMin, setLocalMin] = useState(minPrice);
+    const [localMax, setLocalMax] = useState(maxPrice);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+    useEffect(() => {
+        if (window.innerWidth < 1024) {
+            document.body.style.overflow = isMobileFilterOpen ? 'hidden' : '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isMobileFilterOpen]);
+
+    const applyPriceFilter = () => {
+        setMinPrice(localMin);
+        setMaxPrice(localMax);
+        setIsMobileFilterOpen(false);
+    };
+
+    const clearAllFilters = () => {
+        setSearch('');
+        setCategory('');
+        setSizeFilter('');
+        setMinPrice('');
+        setMaxPrice('');
+        setLocalMin('');
+        setLocalMax('');
+        setIsMobileFilterOpen(false);
+    };
+    return (
+        <div>
+            {/* Hero */}
+            {!category && !search && !sizeFilter && !minPrice && !maxPrice && page === 1 && (
+                <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800
+                    to-gray-900 flex items-center justify-center text-center px-4 relative overflow-hidden">
+                    <div className="relative z-10">
+                        <h1 className="text-5xl md:text-7xl font-serif text-white drop-shadow-lg"
+                            style={{ fontFamily: "'Playfair Display', serif" }}>
+                            Discover Your Charm
+                        </h1>
+                        <p className="text-xl text-gray-300 mt-4">
+                            Curated collections of luxury and style.
+                        </p>
+                        <button
+                            onClick={() => { clearAllFilters(); setSearch('New Arrival'); }}
+                            className="mt-8 inline-block bg-accent-gold text-primary-bg
+                            px-8 py-3 font-bold uppercase tracking-wider hover:bg-yellow-500
+                            transition-colors">
+                            Shop New Arrivals
+                        </button>
+                    </div>
+                </section>
+            )}
+
+            <section className="container mx-auto py-10 px-4">
+
+                {/* Mobile/Tablet Search */}
+                <div className="relative w-full mb-8 lg:hidden">
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35" />
+                    </svg>
+                    <input
+                        type="text" value={search} onChange={e => setSearch(e.target.value)}
+                        placeholder="Search products..."
+                        className="w-full pl-11 pr-10 py-3 bg-secondary-bg border border-border-color rounded-full focus:outline-none focus:border-accent-gold text-sm"
+                    />
+                </div>
+
+                {/* Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-border-color">
+                    <div>
+                        <h2 className="text-3xl font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            {search ? `Results for "${search}"` : category || 'All Collection'}
+                        </h2>
+                        <p className="text-sm text-text-secondary mt-1">Showing {pagination.total} styles</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                        {(search || category || sizeFilter || minPrice || maxPrice) && (
+                            <button onClick={clearAllFilters} className="text-xs text-red-400 hover:text-red-500 font-bold uppercase tracking-wider transition-colors hidden sm:block">
+                                Clear Filters ✕
+                            </button>
+                        )}
+
+                        {/* NEW: Mobile Filter Button */}
+                        <button
+                            onClick={() => setIsMobileFilterOpen(true)}
+                            className="lg:hidden flex items-center gap-2 p-2.5 bg-secondary-bg border border-border-color rounded text-sm focus:outline-none focus:border-accent-gold"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+                            Filters
+                            {(sizeFilter || minPrice || maxPrice) && (
+                                <span className="w-2 h-2 rounded-full bg-accent-gold"></span>
+                            )}
+                        </button>
+
+                        <select
+                            value={sort} onChange={e => setSort(e.target.value)}
+                            className="p-2.5 pr-8 bg-secondary-bg border border-border-color rounded text-sm focus:outline-none focus:border-accent-gold cursor-pointer appearance-none flex-1 sm:flex-none"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
+                            }}
+                        >
+                            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-8">
+
+                    {/* ─── MOBILE FILTER BACKDROP ─── */}
+                    {isMobileFilterOpen && (
+                        <div
+                            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+                            onClick={() => setIsMobileFilterOpen(false)}
+                        />
+                    )}
+
+                    {/* ─── SIDEBAR FILTERS (Drawer on Mobile, Static on Desktop) ─── */}
+                    <aside className={`
+                        fixed inset-y-0 left-0 z-50 w-[85vw] sm:w-80 bg-primary-bg p-6 overflow-y-auto
+                        transition-transform duration-300 ease-in-out transform
+                        ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}
+                        lg:static lg:z-auto lg:w-64 lg:p-0 lg:bg-transparent lg:translate-x-0 lg:flex-shrink-0 lg:space-y-8
+                    `}>
+
+                        {/* Mobile Drawer Header */}
+                        <div className="flex items-center justify-between lg:hidden mb-8 border-b border-border-color pb-4">
+                            <h2 className="text-xl font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>Filters</h2>
+                            <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 hover:text-accent-gold text-xl">✕</button>
+                        </div>
+
+                        {/* Desktop Search */}
+                        <div className="hidden lg:block relative w-full mb-8 lg:mb-0">
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35" /></svg>
+                            <input
+                                type="text" value={search} onChange={e => setSearch(e.target.value)}
+                                placeholder="Search..."
+                                className="w-full pl-9 pr-3 py-2 bg-transparent border-b border-border-color focus:border-accent-gold focus:outline-none text-sm transition-colors"
+                            />
+                        </div>
+
+                        {/* Size Filter */}
+                        <div className="mb-8 lg:mb-0">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary mb-3">Filter by Size</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {SIZES.map(s => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setSizeFilter(sizeFilter === s ? '' : s)}
+                                        className={`w-10 h-10 border text-sm font-semibold transition-colors ${sizeFilter === s
+                                            ? 'bg-accent-gold border-accent-gold text-primary-bg'
+                                            : 'border-border-color hover:border-accent-gold text-text-primary'}`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Price Filter */}
+                        <div className="mb-8 lg:mb-0">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary mb-3">Filter by Price</h3>
+                            <div className="flex items-center gap-2 mb-3">
+                                <input
+                                    type="number" placeholder="Min ₹" value={localMin} onChange={e => setLocalMin(e.target.value)}
+                                    className="w-full p-2 bg-primary-bg border border-border-color rounded text-sm focus:outline-none focus:border-accent-gold"
+                                />
+                                <span className="text-text-secondary">-</span>
+                                <input
+                                    type="number" placeholder="Max ₹" value={localMax} onChange={e => setLocalMax(e.target.value)}
+                                    className="w-full p-2 bg-primary-bg border border-border-color rounded text-sm focus:outline-none focus:border-accent-gold"
+                                />
+                            </div>
+                            <button
+                                onClick={applyPriceFilter}
+                                className="w-full py-2 border border-accent-gold text-accent-gold font-bold text-xs uppercase tracking-wider hover:bg-accent-gold hover:text-primary-bg transition-colors rounded">
+                                Apply Price
+                            </button>
+                        </div>
+
+                        {/* Mobile Clear Filters Button */}
+                        {(search || category || sizeFilter || minPrice || maxPrice) && (
+                            <div className="lg:hidden mt-8 pt-4 border-t border-border-color">
+                                <button onClick={clearAllFilters} className="w-full py-3 text-sm text-red-400 border border-red-400/40 rounded font-bold uppercase tracking-wider transition-colors hover:bg-red-400/10">
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        )}
+                    </aside>
+
+                    {/* ─── PRODUCT GRID ─── */}
+                    <div className="flex-1">
+                        {loading && (
+                            <div className="text-center py-20">
+                                <div className="inline-block w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin mb-4" />
+                                <p className="text-text-secondary">Loading collections...</p>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="text-center py-20 text-red-400">
+                                <p>{error}</p>
+                            </div>
+                        )}
+
+                        {!loading && !error && products.length === 0 && (
+                            <div className="text-center py-20 bg-secondary-bg border border-border-color">
+                                <p className="text-text-secondary text-lg mb-3">No styles match your filters.</p>
+                                <button onClick={clearAllFilters} className="text-accent-gold text-sm font-bold hover:underline">
+                                    Clear all filters
+                                </button>
+                            </div>
+                        )}
+
+                        {!loading && (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                                {products?.map(product => (
+                                    <ProductCard key={product._id} product={product} />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {!loading && pagination.pages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
+                                <button
+                                    onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0 }); }}
+                                    disabled={page === 1}
+                                    className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold hover:text-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    ← Prev
+                                </button>
+
+                                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                                    .filter(n => n === 1 || n === pagination.pages || Math.abs(n - page) <= 1)
+                                    .reduce((acc, n, i, arr) => {
+                                        if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+                                        acc.push(n);
+                                        return acc;
+                                    }, [])
+                                    .map((n, i) => n === '...' ? (
+                                        <span key={`dot${i}`} className="px-2 text-text-secondary">…</span>
+                                    ) : (
+                                        <button key={n}
+                                            onClick={() => { setPage(n); window.scrollTo({ top: 0 }); }}
+                                            className={`w-9 h-9 text-sm font-bold border transition-colors ${page === n ? 'bg-accent-gold text-primary-bg border-accent-gold' : 'border-border-color hover:border-accent-gold hover:text-accent-gold'}`}>
+                                            {n}
+                                        </button>
+                                    ))
+                                }
+
+                                <button
+                                    onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0 }); }}
+                                    disabled={page === pagination.pages}
+                                    className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold hover:text-accent-gold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    Next →
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
-        )}
-
-        <section className="container mx-auto py-10 px-4">
-            {/* Search bar */}
-            <div className="relative max-w-xl mx-auto mb-8">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4
-                    text-text-secondary pointer-events-none"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" />
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                        strokeWidth={2} d="M21 21l-4.35-4.35" />
-                </svg>
-                <input
-                    type="text"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search products..."
-                    className="w-full pl-11 pr-10 py-3 bg-secondary-bg border border-border-color
-                        rounded-full focus:outline-none focus:border-accent-gold transition-colors
-                        text-sm"
-                />
-                {search && (
-                    <button onClick={() => setSearch('')}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary
-                            hover:text-text-primary text-lg leading-none">
-                        ✕
-                    </button>
-                )}
-            </div>
-
-            {/* Toolbar: title + count + sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                <div>
-                    <h2 className="text-2xl font-serif"
-                        style={{ fontFamily: "'Playfair Display', serif" }}>
-                        {search ? `Results for "${search}"` : category || 'All Products'}
-                    </h2>
-                    <p className="text-sm text-text-secondary mt-0.5">
-                        {pagination.total} product{pagination.total !== 1 ? 's' : ''}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    {(search || category) && (
-                        <button onClick={() => setSearch('')}
-                            className="text-xs text-text-secondary hover:text-accent-gold
-                                underline transition-colors">
-                            Clear filters
-                        </button>
-                    )}
-                    <select
-                        value={sort}
-                        onChange={e => setSort(e.target.value)}
-                        className="p-2 pr-8 bg-secondary-bg border border-border-color rounded
-                            text-sm focus:outline-none focus:border-accent-gold transition-colors
-                            appearance-none cursor-pointer"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 8px center'
-                        }}
-                    >
-                        {SORT_OPTIONS.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {/* Loading */}
-            {loading && (
-                <div className="text-center py-16">
-                    <div className="inline-block w-8 h-8 border-2 border-accent-gold
-                        border-t-transparent rounded-full animate-spin mb-4"/>
-                    <p className="text-text-secondary">Loading products...</p>
-                </div>
-            )}
-
-            {/* Error */}
-            {error && (
-                <div className="text-center py-16">
-                    <p className="text-red-400 mb-2">{error}</p>
-                    <p className="text-text-secondary text-sm">
-                        Make sure the backend server is running.
-                    </p>
-                </div>
-            )}
-
-            {/* Empty */}
-            {!loading && !error && products.length === 0 && (
-                <div className="text-center py-16">
-                    <p className="text-text-secondary text-lg mb-3">No products found.</p>
-                    <button onClick={() => setSearch('')}
-                        className="text-accent-gold text-sm hover:underline">
-                        Clear search
-                    </button>
-                </div>
-            )}
-
-            {/* Grid */}
-            {!loading && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {products.map(product => (
-                        <ProductCard key={product._id} product={product} />
-                    ))}
-                </div>
-            )}
-
-            {/* Pagination */}
-            {!loading && pagination.pages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
-                    <button
-                        onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0 }); }}
-                        disabled={page === 1}
-                        className="px-4 py-2 border border-border-color text-sm font-semibold
-                            hover:border-accent-gold hover:text-accent-gold transition-colors
-                            disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        ← Prev
-                    </button>
-
-                    {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-                        .filter(n => n === 1 || n === pagination.pages ||
-                            Math.abs(n - page) <= 1)
-                        .reduce((acc, n, i, arr) => {
-                            if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
-                            acc.push(n);
-                            return acc;
-                        }, [])
-                        .map((n, i) => n === '...' ? (
-                            <span key={`dot${i}`}
-                                className="px-2 text-text-secondary">…</span>
-                        ) : (
-                            <button key={n}
-                                onClick={() => { setPage(n); window.scrollTo({ top: 0 }); }}
-                                className={`w-9 h-9 text-sm font-bold border transition-colors ${page === n
-                                    ? 'bg-accent-gold text-primary-bg border-accent-gold'
-                                    : 'border-border-color hover:border-accent-gold hover:text-accent-gold'
-                                    }`}>
-                                {n}
-                            </button>
-                        ))
-                    }
-
-                    <button
-                        onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0 }); }}
-                        disabled={page === pagination.pages}
-                        className="px-4 py-2 border border-border-color text-sm font-semibold
-                            hover:border-accent-gold hover:text-accent-gold transition-colors
-                            disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        Next →
-                    </button>
-                </div>
-            )}
-        </section>
-    </div>
-);
+        </div>
+    )
+};
 
 // ── Root App (with providers) ─────────────────────────────────
 export default function App() {
@@ -689,6 +775,9 @@ export default function App() {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState('newest');
     const [page, setPage] = useState(1);
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [sizeFilter, setSizeFilter] = useState('');
     const [pagination, setPagination] = useState({ pages: 1, total: 0 });
 
     useEffect(() => {
@@ -714,6 +803,9 @@ export default function App() {
                     sort,
                     ...(category && { category }),
                     ...(search && { search }),
+                    ...(minPrice && { minPrice }),
+                    ...(maxPrice && { maxPrice }),
+                    ...(sizeFilter && { size: sizeFilter }),
                 });
                 const { data } = await api.get(`/api/products?${params}`);
                 setProducts(data.products);
@@ -724,9 +816,9 @@ export default function App() {
             setLoading(false);
         };
         fetchProducts();
-    }, [page, sort, category, search]);
+    }, [page, sort, category, search, minPrice, maxPrice, sizeFilter]);
 
-    useEffect(() => { setPage(1); }, [category, search, sort]);
+    useEffect(() => { setPage(1); }, [category, search, sort, minPrice, maxPrice, sizeFilter]);
 
     const themeStyles = useMemo(() => `
         :root[data-theme='dark'] {
@@ -796,6 +888,12 @@ export default function App() {
                             page={page}
                             setPage={setPage}
                             pagination={pagination}
+                            minPrice={minPrice}
+                            setMinPrice={setMinPrice}
+                            maxPrice={maxPrice}
+                            setMaxPrice={setMaxPrice}
+                            sizeFilter={sizeFilter}
+                            setSizeFilter={setSizeFilter}
                         />
                     </Router>
                 </WishlistProvider>
@@ -805,13 +903,15 @@ export default function App() {
 }
 
 // Separate so we can use useNavigate inside Router context
-function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch, sort, setSort, page, setPage, pagination }) {
+function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch, sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter }) {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--primary-bg)', color: 'var(--text-primary)' }}>
             <Routes>
                 {/* Login page — full screen, no header */}
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
                 {/* All other routes — with header */}
                 <Route path="/*" element={
@@ -833,6 +933,12 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                         page={page}
                                         setPage={setPage}
                                         pagination={pagination}
+                                        minPrice={minPrice}
+                                        setMinPrice={setMinPrice}
+                                        maxPrice={maxPrice}
+                                        setMaxPrice={setMaxPrice}
+                                        sizeFilter={sizeFilter}
+                                        setSizeFilter={setSizeFilter}
                                     />
                                 } />
                                 <Route path="/cart" element={<CartPage />} />

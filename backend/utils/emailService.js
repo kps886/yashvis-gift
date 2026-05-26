@@ -27,6 +27,29 @@ const sendEmail = async ({ to, subject, html }) => {
     }
 };
 
+export const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
+    const html = layout(`
+        <div class="title">Password Reset Request</div>
+        <div class="sub">Hi ${userName}, we received a request to reset your password.</div>
+        
+        <p style="margin-bottom: 24px; font-size: 14px; line-height: 1.6; color: #444;">
+            Click the button below to choose a new password. This link is only valid for <strong>10 minutes</strong>.
+        </p>
+
+        <a href="${resetUrl}" class="btn" style="margin-top: 0; margin-bottom: 24px;">Reset Password</a>
+
+        <p style="font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 16px;">
+            If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+    `);
+
+    await sendEmail({
+        to: userEmail,
+        subject: 'Reset your MonikaCreation password',
+        html,
+    });
+};
+
 // ── Shared layout wrapper ─────────────────────────────────────
 const layout = (content) => `
 <!DOCTYPE html>
