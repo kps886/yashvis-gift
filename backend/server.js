@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import promoRoutes from './routes/promoRoutes.js';
 import analyticRoutes from './routes/analyticsRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/promo',  promoRoutes);
 app.use('/api/analytics', analyticRoutes);
+app.use('/api/cart', cartRoutes);
 
 
 // 404 handler
