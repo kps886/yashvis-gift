@@ -18,6 +18,7 @@ import { WishlistProvider, WishlistContext } from './wishlist/WishlistContext';
 import WishlistPage from './wishlist/WishlistPage';
 import ForgotPasswordPage from './login/ForgotPasswordPage';
 import ResetPasswordPage from './login/ResetPasswordPage';
+import { Toaster } from 'react-hot-toast';
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -872,6 +873,34 @@ export default function App() {
                         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
                         ${themeStyles}
                         `}</style>
+
+                        <Toaster 
+                            position="top-center"
+                            reverseOrder={false}
+                            toastOptions={{
+                                // Default styling for all toasts
+                                style: {
+                                    background: 'var(--secondary-bg)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    fontFamily: "'Montserrat', sans-serif",
+                                    fontSize: '14px',
+                                },
+                                // Specific styling for success toasts
+                                success: {
+                                    iconTheme: {
+                                        primary: 'var(--accent-gold)',
+                                        secondary: 'var(--primary-bg)',
+                                    },
+                                },
+                                // Specific styling for error toasts
+                                error: {
+                                    style: {
+                                        border: '1px solid #ef4444',
+                                    },
+                                },
+                            }}
+                        />
 
                         <AppRoutes
                             theme={theme}

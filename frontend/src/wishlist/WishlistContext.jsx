@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api';
 import { AuthContext } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 export const WishlistContext = createContext();
 
@@ -35,9 +36,15 @@ export const WishlistProvider = ({ children }) => {
             // Optimistic: refetch full list to get populated product data
             const list = await api.get('/api/users/wishlist');
             setWishlist(list.data);
+            if (data.wishlist.includes(productId)) {
+                toast.success('Added to wishlist!');
+            } else {
+                toast.success('Removed from wishlist');
+            }
             return data.wishlisted;
-        } catch {
-            return null;
+        } catch (error) {
+            console.error('Wishlist error:', error);
+            toast.error('Failed to update wishlist');
         }
     };
 

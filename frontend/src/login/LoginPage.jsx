@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import toast from 'react-hot-toast';
 
 const LoginPage = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
-    const [localError, setLocalError] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
 
-    const { login, register, loading, authError, setAuthError, isLoggedIn, user } = useAuth();
+    const { login, register, loading, isLoggedIn, user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,16 +28,13 @@ const LoginPage = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setLocalError('');
-        setAuthError(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLocalError('');
 
         if (!isLogin && formData.password !== formData.confirmPassword) {
-            setLocalError('Passwords do not match');
+            toast.error('Passwords do not match')
             return;
         }
 
@@ -49,18 +46,18 @@ const LoginPage = () => {
         }
 
         if (result.success) {
+            toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
             navigate(getDashboardPath(result.role), { replace: true });
+        }
+        else{
+            toast.error(result.message || 'Authentication failed');
         }
     };
 
     const switchMode = () => {
         setIsLogin(!isLogin);
-        setLocalError('');
-        setAuthError(null);
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     };
-
-    const error = localError || authError;
 
     return (
         // 1. Dynamic Background Container
@@ -96,12 +93,6 @@ const LoginPage = () => {
                     <h2 className="text-3xl font-serif text-center mb-8 text-text-primary">
                         {isLogin ? 'Login' : 'Create Account'}
                     </h2>
-
-                    {error && (
-                        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg">
-                            {error}
-                        </div>
-                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {!isLogin && (
