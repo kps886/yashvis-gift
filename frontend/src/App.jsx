@@ -498,10 +498,15 @@ const SORT_OPTIONS = [
 ];
 
 const HomePage = ({ products, loading, error, category, setCategory, search, setSearch,
-    sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter }) => {
+    sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter, forceRefresh }) => {
     const [localMin, setLocalMin] = useState(minPrice);
     const [localMax, setLocalMax] = useState(maxPrice);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+    useEffect(() => {
+        forceRefresh();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (window.innerWidth < 1024) {
@@ -776,6 +781,7 @@ export default function App() {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState('newest');
     const [page, setPage] = useState(1);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
     const [sizeFilter, setSizeFilter] = useState('');
@@ -817,7 +823,7 @@ export default function App() {
             setLoading(false);
         };
         fetchProducts();
-    }, [page, sort, category, search, minPrice, maxPrice, sizeFilter]);
+    }, [page, sort, category, search, minPrice, maxPrice, sizeFilter, refreshTrigger]);
 
     useEffect(() => { setPage(1); }, [category, search, sort, minPrice, maxPrice, sizeFilter]);
 
@@ -923,6 +929,7 @@ export default function App() {
                             setMaxPrice={setMaxPrice}
                             sizeFilter={sizeFilter}
                             setSizeFilter={setSizeFilter}
+                            setRefreshTrigger={setRefreshTrigger}
                         />
                     </Router>
                 </WishlistProvider>
@@ -932,7 +939,7 @@ export default function App() {
 }
 
 // Separate so we can use useNavigate inside Router context
-function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch, sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter }) {
+function AppRoutes({ theme, toggleTheme, products, loading, error, category, setCategory, search, setSearch, sort, setSort, page, setPage, pagination, minPrice, setMinPrice, maxPrice, setMaxPrice, sizeFilter, setSizeFilter, setRefreshTrigger }) {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--primary-bg)', color: 'var(--text-primary)' }}>
@@ -968,6 +975,7 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                         setMaxPrice={setMaxPrice}
                                         sizeFilter={sizeFilter}
                                         setSizeFilter={setSizeFilter}
+                                        forceRefresh={() => setRefreshTrigger(prev => prev + 1)}
                                     />
                                 } />
                                 <Route path="/cart" element={<CartPage />} />
