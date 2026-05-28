@@ -38,7 +38,6 @@ router.get('/', async (req, res) => {
                 }
             };
         }
-        console.log('Filter:', filter);
         // Build sort
         const SORT_MAP = {
             newest: { createdAt: -1 },

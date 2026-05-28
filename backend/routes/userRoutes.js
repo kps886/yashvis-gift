@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { protect, adminOnly, shopkeeperAndAbove } from '../middleware/authMiddleware.js';
 import crypto from 'crypto';
-import { sendPasswordResetEmail } from '../utils/emailService.js';
+import { sendPasswordResetEmail, sendEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -32,12 +32,33 @@ router.post('/register', async (req, res) => {
 
         const user = await User.create({ name, email, password, role: 'user' });
 
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        user.otpExpire = Date.now() + 10 * 60 * 1000; // 10 mins
+        await user.save();
+
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: 'Verify your MonikaCreation Account',
+                html: `
+                    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                        <h2>Welcome to MonikaCreation!</h2>
+                        <p>Your verification code is:</p>
+                        <h1 style="color: #d4af37; letter-spacing: 5px;">${otp}</h1>
+                        <p>This code will expire in 10 minutes.</p>
+                    </div>
+                `,
+            });
+        } catch (error) {
+            console.error("Email failed to send:", error);
+        }
+
         res.status(201).json({
-            _id: user._id,
-            name: user.name,
+            success: true,
+            requiresVerification: true,
             email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
+            message: 'Registration successful. Please verify your email.'
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error during registration' });
@@ -65,6 +86,14 @@ router.post('/login', async (req, res) => {
             return res.status(403).json({ message: 'Your account has been deactivated. Contact admin.' });
         }
 
+        if (!user.isVerified) {
+            return res.status(403).json({ 
+                message: 'Please verify your email before logging in.',
+                requiresVerification: true,
+                email: user.email 
+            });
+        }
+
         res.json({
             _id: user._id,
             name: user.name,
@@ -74,6 +103,89 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error during login' });
+    }
+});
+
+// @desc    Resend OTP
+// @route   POST /api/users/resend-otp
+// @access  Public
+router.post('/resend-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (user.isVerified) return res.status(400).json({ message: 'Account is already verified' });
+
+        // Check our strict 3-time limit
+        if (user.otpResendCount >= 3) {
+            return res.status(429).json({ message: 'Maximum OTP resend limit reached. Please contact support.' });
+        }
+
+        // Generate new 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        user.otpExpire = Date.now() + 10 * 60 * 1000; // 10 mins
+        user.otpResendCount += 1; // Increment the counter!
+        await user.save();
+
+        // Send Email
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: 'Your New Verification Code',
+                html: `
+                    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                        <h2>MonikaCreation</h2>
+                        <p>Here is your new verification code:</p>
+                        <h1 style="color: #d4af37; letter-spacing: 5px;">${otp}</h1>
+                        <p>This code will expire in 10 minutes.</p>
+                    </div>
+                `,
+            });
+        } catch (error) {
+            console.error("Email failed to send:", error);
+        }
+
+        // Return the number of attempts left to the frontend
+        res.json({ message: 'OTP resent successfully', attemptsLeft: 3 - user.otpResendCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during OTP resend' });
+    }
+});
+
+// @desc    Verify OTP
+// @route   POST /api/users/verify-otp
+// @access  Public
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (user.isVerified) return res.status(400).json({ message: 'Account is already verified' });
+
+        if (user.otp !== otp || user.otpExpire < Date.now()) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        // Success! Verify user and clear OTP
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpire = undefined;
+        user.unverifiedExpireAt = undefined;
+        await user.save();
+
+        // Log them in
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id),
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during verification' });
     }
 });
 

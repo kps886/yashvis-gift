@@ -30,7 +30,12 @@ export const AuthProvider = ({ children }) => {
             const msg = err.response?.data?.message || 'Login failed. Please try again.';
             setAuthError(msg);
             setLoading(false);
-            return { success: false, error: msg };
+            return { 
+                success: false, 
+                error: msg,
+                requiresVerification: err.response?.data?.requiresVerification,
+                email: err.response?.data?.email
+            };
         }
     };
 
@@ -40,16 +45,43 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await api.post('/api/users/register', { name, email, password });
             
-            localStorage.setItem('monikaCreationUser', JSON.stringify(data));
-            setUser(data);
-            
+            // Notice we do NOT log them in here anymore. We just return the data.
             setLoading(false);
-            return { success: true, role: data.role };
+            return { 
+                success: true, 
+                requiresVerification: data.requiresVerification, 
+                email: data.email 
+            };
         } catch (err) {
             const msg = err.response?.data?.message || 'Registration failed. Please try again.';
             setAuthError(msg);
             setLoading(false);
             return { success: false, error: msg };
+        }
+    };
+
+    const verifyOtpAndLogin = async (email, otp) => {
+        setLoading(true);
+        try {
+            const { data } = await api.post('/api/users/verify-otp', { email, otp });
+            
+            localStorage.setItem('monikaCreationUser', JSON.stringify(data));
+            setUser(data);
+            
+            setLoading(false);
+            return { success: true, role: data.role };
+        } catch (error) {
+            setLoading(false);
+            return { success: false, error: error.response?.data?.message || 'Verification failed' };
+        } 
+    };
+
+    const resendOtp = async (email) => {
+        try {
+            const { data } = await api.post('/api/users/resend-otp', { email });
+            return { success: true, message: data.message, attemptsLeft: data.attemptsLeft };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.message || 'Failed to resend OTP' };
         }
     };
 
@@ -78,6 +110,8 @@ export const AuthProvider = ({ children }) => {
             isShopkeeper,
             isEmployee,
             isLoggedIn,
+            verifyOtpAndLogin,
+            resendOtp,
         }}>
             {children}
         </AuthContext.Provider>

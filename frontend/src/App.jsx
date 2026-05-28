@@ -18,6 +18,7 @@ import { WishlistProvider, WishlistContext } from './wishlist/WishlistContext';
 import WishlistPage from './wishlist/WishlistPage';
 import ForgotPasswordPage from './login/ForgotPasswordPage';
 import ResetPasswordPage from './login/ResetPasswordPage';
+import OTPVerificationPage from './login/OTPVerificationPage';
 import { Toaster } from 'react-hot-toast';
 
 // ── Icons ────────────────────────────────────────────────────
@@ -948,6 +949,7 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                <Route path="/verify-email" element={<OTPVerificationPage />} />
 
                 {/* All other routes — with header */}
                 <Route path="/*" element={

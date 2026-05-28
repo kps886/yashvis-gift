@@ -43,6 +43,25 @@ const userSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    isVerified: { 
+        type: Boolean, 
+        default: false 
+    },
+    otp: { 
+        type: String 
+    },
+    otpExpire: { 
+        type: Date 
+    },
+    otpResendCount: {
+        type: Number,
+        default: 0
+    },
+    unverifiedExpireAt: {
+        type: Date,
+        default: () => Date.now() + 24 * 60 * 60 * 1000,
+        expires: 0
+    },
 }, { timestamps: true });
 
 userSchema.pre('save', async function () {

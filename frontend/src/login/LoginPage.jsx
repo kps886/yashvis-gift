@@ -46,11 +46,21 @@ const LoginPage = () => {
         }
 
         if (result.success) {
-            toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
-            navigate(getDashboardPath(result.role), { replace: true });
+            if (result.requiresVerification) {
+                toast.success('Check your email for the verification code!');
+                navigate('/verify-email', { state: { email: result.email } });
+            } else {
+                toast.success('Welcome back!');
+                navigate(getDashboardPath(result.role), { replace: true });
+            }
         }
         else{
-            toast.error(result.message || 'Authentication failed');
+            if (result.requiresVerification) {
+                toast.error('Please verify your email before logging in.');
+                navigate('/verify-email', { state: { email: result.email } });
+            } else {
+                toast.error(result.error || result.message || 'Authentication failed');
+            }
         }
     };
 

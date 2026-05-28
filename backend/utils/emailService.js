@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // ── Shared email wrapper ──────────────────────────────────────
-const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async ({ to, subject, html }) => {
     try {
         await transporter.sendMail({
             from:    process.env.EMAIL_FROM,
