@@ -4,6 +4,7 @@ import api from '../api';
 import { CartContext } from '../cart/cartProvider';
 import { useAuth } from '../auth/AuthContext';
 import { WishlistContext } from '../wishlist/WishlistContext';
+import toast from 'react-hot-toast';
 
 // ── Star components ────────────────────────────
 
@@ -40,7 +41,7 @@ const StarPicker = ({ value, onChange }) => (
 // ─────────────────────────────────────────────────────────────
 const ProductDetailsPage = () => {
     const { id } = useParams();
-    const { addToCart } = useContext(CartContext);
+    const { addToCart, cartItems, updateQty, removeFromCart } = useContext(CartContext);
     const { isWishlisted, toggle } = useContext(WishlistContext);
     const { isLoggedIn, user } = useAuth();
     const navigate = useNavigate();
@@ -51,14 +52,14 @@ const ProductDetailsPage = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState(false);
-
+    
     // Review form
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [reviewLoading, setReviewLoading] = useState(false);
     const [reviewError, setReviewError] = useState('');
     const [reviewSuccess, setReviewSuccess] = useState('');
-
+    
     const fetchProduct = useCallback(async () => {
         try {
             const { data } = await api.get(`/api/products/${id}`);
@@ -70,6 +71,9 @@ const ProductDetailsPage = () => {
     useEffect(() => {
         fetchProduct();
     }, [fetchProduct]);
+    
+    const cartItem = product ? cartItems.find(x => x._id === product._id && x.size === selectedSize) : null;
+ 
 
     const handleAddToCart = () => {
         const hasVariations = product.variations?.length > 0;
@@ -243,21 +247,39 @@ const ProductDetailsPage = () => {
 
                     {/* Action buttons */}
                     <div className="flex gap-3 flex-wrap">
-                        <button
-                            onClick={handleAddToCart}
-                            disabled={product.stock === 0}
-                            className={`flex-1 min-w-[160px] py-3 font-bold uppercase
-                                tracking-wider transition-all duration-200 text-sm ${product.stock === 0
-                                    ? 'bg-border-color text-text-secondary cursor-not-allowed'
-                                    : added
-                                        ? 'bg-green-500 text-white scale-95'
-                                        : 'bg-accent-gold text-primary-bg hover:bg-yellow-500'
+                        {cartItem ? (
+                            <div className="flex items-center border-2 border-accent-gold rounded h-12 flex-1 min-w-[160px] bg-primary-bg overflow-hidden">
+                                <button
+                                    onClick={() => cartItem.qty === 1 ? removeFromCart(cartItem._id, cartItem.size) : updateQty(cartItem._id, cartItem.size, cartItem.qty - 1)}
+                                    className="w-12 h-full text-xl font-bold hover:bg-accent-gold hover:text-primary-bg transition-colors text-accent-gold flex items-center justify-center"
+                                >
+                                    −
+                                </button>
+                                <span className="flex-1 text-center font-bold text-sm text-text-primary">
+                                    {cartItem.qty} Added
+                                </span>
+                                <button
+                                    onClick={() => updateQty(cartItem._id, cartItem.size, cartItem.qty + 1)}
+                                    className="w-12 h-full text-xl font-bold hover:bg-accent-gold hover:text-primary-bg transition-colors text-accent-gold flex items-center justify-center"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={product.stock === 0}
+                                className={`flex-1 min-w-[160px] h-12 font-bold uppercase tracking-wider transition-all duration-200 text-sm ${
+                                    product.stock === 0
+                                        ? 'bg-border-color text-text-secondary cursor-not-allowed'
+                                        : added
+                                            ? 'bg-green-500 text-white scale-95'
+                                            : 'bg-accent-gold text-primary-bg hover:bg-yellow-500'
                                 }`}
-                        >
-                            {product.stock === 0
-                                ? 'Out of Stock'
-                                : added ? '✓ Added!' : 'Add to Bag'}
-                        </button>
+                            >
+                                {product.stock === 0 ? 'Out of Stock' : added ? '✓ Added!' : 'Add to Bag'}
+                            </button>
+                        )}
 
                         {/* Wishlist button */}
                         <button
