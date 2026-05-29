@@ -260,6 +260,7 @@ const ProductDetailsPage = () => {
                                 </span>
                                 <button
                                     onClick={() => updateQty(cartItem._id, cartItem.size, cartItem.qty + 1)}
+                                    disabled={cartItem.qty >= product.stock}
                                     className="w-12 h-full text-xl font-bold hover:bg-accent-gold hover:text-primary-bg transition-colors text-accent-gold flex items-center justify-center"
                                 >
                                     +
