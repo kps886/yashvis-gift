@@ -52,6 +52,7 @@ const ProductDetailsPage = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState(false);
+    const [imgLoaded, setImgLoaded] = useState(false);
     
     // Review form
     const [rating, setRating] = useState(0);
@@ -141,18 +142,24 @@ const ProductDetailsPage = () => {
             <div className="grid md:grid-cols-2 gap-10 mb-16">
                 {/* ── Images ── */}
                 <div>
-                    <div className="bg-secondary-bg border border-border-color p-3 mb-3">
+                    <div className="bg-secondary-bg border border-border-color p-3 relative aspect-square overflow-hidden">
+                        {!imgLoaded && (
+                            <div className="absolute inset-3 bg-border-color animate-pulse" />
+                        )}
                         <img
                             src={product.images?.[selectedImage] ||
                                 'https://placehold.co/600x600/222/D4AF37?text=MonikaCreation'}
                             alt={product.name}
-                            className="w-full aspect-square object-cover"
+                            onLoad={() => setImgLoaded(true)}
+                            className={`w-full h-full object-cover transition-opacity duration-500 ${
+                                imgLoaded ? 'opacity-100' : 'opacity-0'
+                            }`}
                         />
                     </div>
                     {product.images?.length > 1 && (
                         <div className="flex gap-2 flex-wrap">
                             {product.images.map((img, i) => (
-                                <button key={i} onClick={() => setSelectedImage(i)}
+                                <button key={i} onClick={() => { setSelectedImage(i); setImgLoaded(false); }}
                                     className={`w-16 h-16 border-2 overflow-hidden transition-colors ${selectedImage === i
                                         ? 'border-accent-gold'
                                         : 'border-border-color hover:border-text-secondary'

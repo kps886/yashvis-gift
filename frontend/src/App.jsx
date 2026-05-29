@@ -397,6 +397,7 @@ const ProductCard = ({ product }) => {
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
     const [heartAnim, setHeartAnim] = useState(false);
+    const [imgLoaded, setImgLoaded] = useState(false);
 
     const wishlisted = isWishlisted(product._id);
 
@@ -407,6 +408,10 @@ const ProductCard = ({ product }) => {
         setHeartAnim(true);
         await toggle(product._id);
         setTimeout(() => setHeartAnim(false), 400);
+    };
+
+    const saveScrollPosition = () => {
+        sessionStorage.setItem('homeScrollPos', window.scrollY);
     };
 
     const avgRating = product.avgRating || 0;
@@ -442,20 +447,24 @@ const ProductCard = ({ product }) => {
                 <HeartIcon filled={wishlisted} />
             </button>
 
-            <div className="relative overflow-hidden">
-                <Link to={`/product/${product._id}`}>
+            <div className="relative overflow-hidden aspect-square bg-border-color">
+                {!imgLoaded && (
+                    <div className="absolute inset-0 bg-border-color animate-pulse" />
+                )}
+                <Link to={`/product/${product._id}`} onClick={saveScrollPosition}>
                     <img
-                        src={product.images?.[0] ||
-                            'https://placehold.co/400x400/222222/D4AF37?text=MonikaCreation'}
+                        src={product.images?.[0] || 'https://placehold.co/400x400/222222/D4AF37?text=MonikaCreation'}
                         alt={product.name}
-                        className="w-full aspect-square object-cover transition-transform
-                            duration-500 group-hover:scale-105"
+                        onLoad={() => setImgLoaded(true)}
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${
+                            imgLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-sm'
+                        }`}
                     />
                 </Link>
             </div>
 
             <div className="p-3">
-                <Link to={`/product/${product._id}`}>
+                <Link to={`/product/${product._id}`} onClick={saveScrollPosition}>
                     <h3 className="text-sm font-serif hover:text-accent-gold transition-colors
                         line-clamp-2 mb-1"
                         style={{ fontFamily: "'Playfair Display', serif" }}>
@@ -508,6 +517,16 @@ const HomePage = ({ products, loading, error, category, setCategory, search, set
         forceRefresh();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        if (!loading && products?.length > 0) {
+            const savedScroll = sessionStorage.getItem('homeScrollPos');
+            if (savedScroll) {
+                window.scrollTo(0, parseInt(savedScroll, 10));
+                sessionStorage.removeItem('homeScrollPos');
+            }
+        }
+    }, [loading, products]);
 
     useEffect(() => {
         if (window.innerWidth < 1024) {
