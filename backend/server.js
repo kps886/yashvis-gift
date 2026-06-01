@@ -17,8 +17,20 @@ dotenv.config();
 const app = express();
 
 app.use(helmet())
+const allowedOrigins = [
+    process.env.FRONTEND_URL, // Your live React app
+    'http://localhost:3000',  // Your local React app
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 // app.use(mongoSanitize());

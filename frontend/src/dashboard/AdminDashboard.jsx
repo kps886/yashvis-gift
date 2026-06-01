@@ -244,8 +244,8 @@ const OrdersPanel = () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/api/orders?page=${page}&limit=20&status=${filter}`);
-            setOrders(data.orders);
-            setTotalPages(data.pages);
+            setOrders(data.orders || []);
+            setTotalPages(data.pages || 1);
         } catch { setError('Failed to load orders'); }
         setLoading(false);
     }, [page, filter]);

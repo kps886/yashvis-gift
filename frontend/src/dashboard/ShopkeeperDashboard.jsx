@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
 
@@ -117,8 +117,8 @@ const ReviewsPanel = () => {
                                 <button
                                     onClick={() => handleToggleApproval(review.productId, review._id)}
                                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border transition-colors ${review.isApproved
-                                            ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
-                                            : 'border-green-500/50 text-green-400 hover:bg-green-500/10'
+                                        ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
+                                        : 'border-green-500/50 text-green-400 hover:bg-green-500/10'
                                         }`}
                                 >
                                     {review.isApproved ? 'Hide Review' : 'Approve Review'}
@@ -152,6 +152,8 @@ const Tab = ({ label, active, onClick, badge }) => (
 // ── Orders panel (shared with admin) ─────────────────────────
 const OrdersPanel = () => {
     const [orders, setOrders] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
     const [statusEdit, setStatusEdit] = useState({});
@@ -162,15 +164,19 @@ const OrdersPanel = () => {
 
     const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/api/orders');
-            setOrders(data);
+            const { data } = await api.get(`/api/orders?page=${page}&limit=20&status=${filter}`);
+            setOrders(data.orders || []);
+            setTotalPages(data.pages || 1);
         } catch { setError('Failed to load orders'); }
         setLoading(false);
-    };
-    useEffect(() => { fetchOrders(); }, []);
+    }, [page, filter]);
+
+    // Reset to page 1 when filter changes
+    useEffect(() => { setPage(1); }, [filter]);
+    useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
     const handleUpdateStatus = async (orderId) => {
         const edit = statusEdit[orderId];
@@ -188,8 +194,6 @@ const OrdersPanel = () => {
         setUpdating(null);
     };
 
-    const filtered = filter === 'all' ? orders : orders.filter(o => o.orderStatus === filter);
-
     return (
         <div>
             {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
@@ -203,18 +207,18 @@ const OrdersPanel = () => {
                                 ? 'bg-accent-gold text-primary-bg border-accent-gold'
                                 : 'border-border-color text-text-secondary hover:border-text-secondary'
                             }`}>
-                        {s} ({s === 'all' ? orders.length : orders.filter(o => o.orderStatus === s).length})
+                        {s}
                     </button>
                 ))}
             </div>
 
             {loading ? (
                 <p className="text-center py-12 text-text-secondary animate-pulse">Loading orders...</p>
-            ) : filtered.length === 0 ? (
+            ) : orders.length === 0 ? (
                 <p className="text-center py-12 text-text-secondary">No orders found.</p>
             ) : (
                 <div className="space-y-3">
-                    {filtered.map(order => (
+                    {orders.map(order => (
                         <div key={order._id}
                             className="bg-secondary-bg border border-border-color overflow-hidden">
                             <div
@@ -334,6 +338,15 @@ const OrdersPanel = () => {
                             )}
                         </div>
                     ))}
+                </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6 p-4 bg-secondary-bg border border-border-color rounded">
+                    <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50 transition-colors">Previous</button>
+                    <span className="text-sm text-text-secondary">Page {page} of {totalPages}</span>
+                    <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50 transition-colors">Next</button>
                 </div>
             )}
         </div>
