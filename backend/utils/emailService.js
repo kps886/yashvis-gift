@@ -2,8 +2,8 @@ import nodemailer from 'nodemailer';
 
 // ── Transporter ───────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
-    host:   process.env.EMAIL_HOST,
-    port:   Number(process.env.EMAIL_PORT),
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
     secure: false,
     auth: {
         user: process.env.EMAIL_USER,
@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 export const sendEmail = async ({ to, subject, html }) => {
     try {
         await transporter.sendMail({
-            from:    process.env.EMAIL_FROM,
+            from: process.env.EMAIL_FROM,
             to,
             subject,
             html,
@@ -186,7 +186,7 @@ export const sendOrderConfirmation = async (order, userEmail, userName) => {
     `);
 
     await sendEmail({
-        to:      userEmail,
+        to: userEmail,
         subject: `Order Confirmed — #${orderId} | MonikaCreation`,
         html,
     });
@@ -197,24 +197,24 @@ export const sendOrderConfirmation = async (order, userEmail, userName) => {
 // ─────────────────────────────────────────────────────────────
 const STATUS_MESSAGES = {
     processing: {
-        emoji:   '📦',
-        title:   'Your order is being processed',
-        body:    'Our team has confirmed your order and is preparing it for dispatch.',
+        emoji: '📦',
+        title: 'Your order is being processed',
+        body: 'Our team has confirmed your order and is preparing it for dispatch.',
     },
     shipped: {
-        emoji:   '🚚',
-        title:   'Your order is on its way!',
-        body:    'Your package has been handed over to the courier and is headed your way.',
+        emoji: '🚚',
+        title: 'Your order is on its way!',
+        body: 'Your package has been handed over to the courier and is headed your way.',
     },
     delivered: {
-        emoji:   '✅',
-        title:   'Your order has been delivered',
-        body:    'We hope you love your purchase! If you have any issues, please reach out to us.',
+        emoji: '✅',
+        title: 'Your order has been delivered',
+        body: 'We hope you love your purchase! If you have any issues, please reach out to us.',
     },
     cancelled: {
-        emoji:   '❌',
-        title:   'Your order has been cancelled',
-        body:    'Your order has been cancelled. If a payment was made, it will be refunded within 5–7 business days.',
+        emoji: '❌',
+        title: 'Your order has been cancelled',
+        body: 'Your order has been cancelled. If a payment was made, it will be refunded within 5–7 business days.',
     },
 };
 
@@ -250,8 +250,38 @@ export const sendStatusUpdate = async (order, userEmail, userName) => {
     `);
 
     await sendEmail({
-        to:      userEmail,
+        to: userEmail,
         subject: `${info.emoji} Order ${order.orderStatus} — #${orderId} | MonikaCreation`,
         html,
     });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 3. LOW STOCK ALERT EMAIL (ADMIN/SHOPKEEPER)
+// ─────────────────────────────────────────────────────────────
+export const sendLowStockAlert = async (product, adminEmails) => {
+    const html = layout(`
+        <div class="title">🚨 Action Required: Out of Stock</div>
+        <div class="sub">A product has reached 0 inventory after a recent purchase.</div>
+
+        <div class="label">Product Details</div>
+        <div class="address-block">
+            <strong>Name:</strong> ${product.name}<br/>
+            <strong>Category:</strong> ${product.category}<br/>
+            <strong>Product ID:</strong> ${product._id}
+        </div>
+
+        <a href="${process.env.FRONTEND_URL}/shopkeeper" class="btn" style="background: #ef4444; color: white;">
+            Go to Inventory Dashboard
+        </a>
+    `);
+
+    // Send to all staff members
+    for (const email of adminEmails) {
+        await sendEmail({
+            to: email,
+            subject: `🚨 Out of Stock Alert: ${product.name} | MonikaCreation`,
+            html,
+        });
+    }
 };

@@ -157,9 +157,21 @@ router.post('/verify-payment', protect, async (req, res) => {
 
         // 3. Deduct stock for each item
         for (const item of order.items) {
-            await Product.findByIdAndUpdate(item.product, {
+            const updatedProduct = await Product.findByIdAndUpdate(item.product, {
                 $inc: { stock: -item.quantity },
-            });
+            }, { new: true });
+
+            if (updatedProduct && updatedProduct.stock <= 0) {
+                const staffMembers = await User.find({ 
+                    role: { $in: ['admin', 'shopkeeper'] } 
+                }).select('email');
+                
+                const staffEmails = staffMembers.map(u => u.email);
+                
+                if (staffEmails.length > 0) {
+                    await sendLowStockAlert(updatedProduct, staffEmails);
+                }
+            }
         }
 
         // 4. Increment promo code usage

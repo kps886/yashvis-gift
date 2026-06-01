@@ -104,7 +104,7 @@ const ProductDetailsPage = () => {
 
         try {
             await api.post(`/api/products/${id}/reviews`, { rating, comment });
-            setReviewSuccess('Review submitted! Thank you.');
+            setReviewSuccess('Review submitted! It will appear once approved by our team.');
             setRating(0);
             setComment('');
             fetchProduct();  // reload to show new review
@@ -400,7 +400,7 @@ const ProductDetailsPage = () => {
                     </p>
                 ) : (
                     <div className="space-y-4">
-                        {[...product.reviews].reverse().map((r, i) => (
+                        {[...product.reviews].filter(r => r.isApproved).reverse().map((r, i) => (
                             <div key={i}
                                 className="bg-secondary-bg border border-border-color p-4">
                                 <div className="flex items-start justify-between gap-4 mb-2">

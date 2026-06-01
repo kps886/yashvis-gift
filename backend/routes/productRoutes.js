@@ -175,7 +175,7 @@ router.delete('/:id', protect, shopkeeperAndAbove, async (req, res) => {
                         if (result.result !== 'ok') {
                             console.error("Cloudinary deletion failed for:", imageUrl, result);
                         }
-                        else{
+                        else {
                             console.log("Cloudinary deletion successful for:", result);
                         }
                     });
@@ -221,14 +221,42 @@ router.post('/:id/reviews', protect, async (req, res) => {
             name: req.user.name,
             rating: Number(rating),
             comment: comment.trim(),
+            isApproved: false
         });
 
-        // Store avg rating and count on the product for easy access
-        product.avgRating = product.reviews.reduce((a, r) => a + r.rating, 0) / product.reviews.length;
-        product.reviewCount = product.reviews.length;
+        const approvedReviews = product.reviews.filter(r => r.isApproved);
+        product.avgRating = approvedReviews.length > 0
+            ? approvedReviews.reduce((a, r) => a + r.rating, 0) / approvedReviews.length
+            : 0;
+        product.reviewCount = approvedReviews.length;
 
         await product.save();
-        res.status(201).json({ message: 'Review added' });
+        res.status(201).json({ message: 'Review submitted! It will appear once approved.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+router.put('/:id/reviews/:reviewId/toggle', protect, shopkeeperAndAbove, async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        const review = product.reviews.id(req.params.reviewId);
+        if (!review) return res.status(404).json({ message: 'Review not found' });
+
+        // Toggle the boolean
+        review.isApproved = !review.isApproved;
+
+        // Recalculate the overall product rating using only approved reviews
+        const approvedReviews = product.reviews.filter(r => r.isApproved);
+        product.avgRating = approvedReviews.length > 0 
+            ? approvedReviews.reduce((a, r) => a + r.rating, 0) / approvedReviews.length 
+            : 0;
+        product.reviewCount = approvedReviews.length;
+
+        await product.save();
+        res.json({ message: `Review ${review.isApproved ? 'Approved' : 'Hidden'}`, review });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
     }
