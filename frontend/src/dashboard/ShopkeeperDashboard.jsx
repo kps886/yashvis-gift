@@ -18,6 +18,120 @@ const emptyForm = {
     sizes: '',
 };
 
+// ── Reviews panel ─────────────────────────────────────────────
+const ReviewsPanel = () => {
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [filter, setFilter] = useState('pending'); // 'pending' | 'approved' | 'all'
+
+    const fetchAllReviews = async () => {
+        setLoading(true);
+        try {
+            // Fetch all products to extract their reviews
+            const { data } = await api.get('/api/products');
+
+            // Flatten reviews array: map over products, extract reviews, and attach the product info to each review
+            const allReviews = data.products.flatMap(p =>
+                (p.reviews || []).map(r => ({
+                    ...r,
+                    productId: p._id,
+                    productName: p.name,
+                    productImage: p.images?.[0]
+                }))
+            ).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); // Sort newest first
+
+            setReviews(allReviews);
+        } catch {
+            setError('Failed to fetch reviews');
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchAllReviews(); }, []);
+
+    const handleToggleApproval = async (productId, reviewId) => {
+        try {
+            await api.put(`/api/products/${productId}/reviews/${reviewId}/toggle`);
+            fetchAllReviews(); // Refresh the list
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to update review status');
+        }
+    };
+
+    const filteredReviews = reviews.filter(r => {
+        if (filter === 'pending') return !r.isApproved;
+        if (filter === 'approved') return r.isApproved;
+        return true;
+    });
+
+    return (
+        <div>
+            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/40 text-red-400 rounded text-sm">{error}</div>}
+
+            <div className="flex gap-2 mb-5">
+                {['pending', 'approved', 'all'].map(f => (
+                    <button key={f} onClick={() => setFilter(f)}
+                        className={`px-3 py-1.5 text-xs font-bold uppercase rounded border transition-colors ${filter === f
+                            ? 'bg-accent-gold text-primary-bg border-accent-gold'
+                            : 'border-border-color text-text-secondary hover:text-text-primary'
+                            }`}>
+                        {f} ({reviews.filter(r => f === 'all' || (f === 'pending' ? !r.isApproved : r.isApproved)).length})
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <p className="text-center py-12 text-text-secondary animate-pulse">Loading reviews...</p>
+            ) : filteredReviews.length === 0 ? (
+                <p className="text-center py-12 text-text-secondary">No {filter} reviews found.</p>
+            ) : (
+                <div className="space-y-4">
+                    {filteredReviews.map(review => (
+                        <div key={review._id} className="bg-secondary-bg border border-border-color p-4 flex flex-col md:flex-row gap-4">
+
+                            {/* Product Info (Left) */}
+                            <div className="flex items-center gap-3 md:w-1/3 border-b md:border-b-0 md:border-r border-border-color pb-3 md:pb-0 md:pr-4">
+                                <img src={review.productImage || 'https://placehold.co/40x40/222/D4AF37?text=C'} alt="" className="w-12 h-12 object-cover border border-border-color" />
+                                <div>
+                                    <p className="font-semibold text-sm line-clamp-1">{review.productName}</p>
+                                    <span className={`mt-1 inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase ${review.isApproved ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                        {review.isApproved ? 'Approved' : 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Review Content (Middle) */}
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-bold text-sm">{review.name}</p>
+                                        <span className="text-accent-gold text-xs font-bold">★ {review.rating}/5</span>
+                                    </div>
+                                </div>
+                                <p className="text-sm text-text-secondary">{review.comment}</p>
+                            </div>
+
+                            {/* Action (Right) */}
+                            <div className="flex items-center md:justify-end border-t md:border-t-0 pt-3 md:pt-0">
+                                <button
+                                    onClick={() => handleToggleApproval(review.productId, review._id)}
+                                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border transition-colors ${review.isApproved
+                                            ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
+                                            : 'border-green-500/50 text-green-400 hover:bg-green-500/10'
+                                        }`}
+                                >
+                                    {review.isApproved ? 'Hide Review' : 'Approve Review'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const Tab = ({ label, active, onClick, badge }) => (
     <button onClick={onClick}
         className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase
@@ -434,14 +548,18 @@ const ShopkeeperDashboard = () => {
     const { user } = useAuth();
     const [tab, setTab] = useState('orders');
 
-    const [counts, setCounts] = useState({ products: 0, orders: 0, pending: 0, outOfStock: 0 });
+    const [counts, setCounts] = useState({ products: 0, orders: 0, pending: 0, outOfStock: 0, pendingReviews: 0 });
     useEffect(() => {
         Promise.all([api.get('/api/products'), api.get('/api/orders')]).then(([p, o]) => {
+            const allUnapprovedReviews = p.data.flatMap(prod =>
+                (prod.reviews || []).filter(r => !r.isApproved)
+            ).length;
             setCounts({
                 products: p.data.length,
                 orders: o.data.length,
                 pending: o.data.filter(x => x.orderStatus === 'pending').length,
                 outOfStock: p.data.filter(x => x.stock === 0).length,
+                pendingReviews: allUnapprovedReviews
             });
         }).catch(() => { });
     }, [tab]);
@@ -482,10 +600,12 @@ const ShopkeeperDashboard = () => {
                 <Tab label="Orders" active={tab === 'orders'} onClick={() => setTab('orders')}
                     badge={counts.pending} />
                 <Tab label="Products" active={tab === 'products'} onClick={() => setTab('products')} />
+                <Tab label="Reviews" active={tab === 'reviews'} onClick={() => setTab('reviews')} badge={counts.pendingReviews} />
             </div>
 
             {tab === 'orders' && <OrdersPanel />}
             {tab === 'products' && <ProductsPanel user={user} />}
+            {tab === 'reviews' && <ReviewsPanel />}
         </div>
     );
 };
