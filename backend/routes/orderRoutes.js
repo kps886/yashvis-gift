@@ -258,4 +258,37 @@ router.put('/:id/status', protect, employeeAndAbove, async (req, res) => {
     }
 });
 
+// @desc    Cancel an order (User initiated)
+// @route   PUT /api/orders/:id/cancel
+// @access  Private
+router.put('/:id/cancel', protect, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // 1. Security Check: Does this order actually belong to the person requesting the cancel?
+        if (order.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to modify this order' });
+        }
+
+        // 2. Logic Check: We ONLY cancel if it hasn't been processed yet
+        if (order.orderStatus !== 'pending') {
+            return res.status(400).json({ 
+                message: `You cannot cancel an order that is already ${order.orderStatus}. Please contact support.` 
+            });
+        }
+
+        // 3. Update status
+        order.orderStatus = 'cancelled';
+        await order.save();
+
+        res.json({ message: 'Order cancelled successfully', order });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error cancelling order' });
+    }
+});
+
 export default router;
