@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Product from '../models/Product.js';
 import { protect, shopkeeperAndAbove, employeeAndAbove } from '../middleware/authMiddleware.js';
-import upload from '../middleware/uploadMiddleware.js';
+import upload, { cloudinary } from '../middleware/uploadMiddleware.js';
 
 // @desc    Fetch products with pagination, sorting, search, category filter
 // @route   GET /api/products?page=1&limit=12&sort=newest&category=X&search=Y
@@ -163,6 +163,27 @@ router.delete('/:id', protect, shopkeeperAndAbove, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        if (product.images && product.images.length > 0) {
+            for (const imageUrl of product.images) {
+                try {
+                    const public_id = imageUrl
+                        .substring(imageUrl.indexOf('monikaCreation_products'))
+                        .split('.')[0];
+
+                    cloudinary.uploader.destroy(public_id, { invalidate: true }).then(result => {
+                        if (result.result !== 'ok') {
+                            console.error("Cloudinary deletion failed for:", imageUrl, result);
+                        }
+                        else{
+                            console.log("Cloudinary deletion successful for:", result);
+                        }
+                    });
+                } catch (imgError) {
+                    console.error("Cloudinary deletion failed for:", imageUrl, imgError);
+                }
+            }
+        }
 
         await Product.deleteOne({ _id: req.params.id });
         res.json({ message: 'Product removed successfully' });

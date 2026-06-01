@@ -21,4 +21,5 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
+export { cloudinary };
 export default upload;
