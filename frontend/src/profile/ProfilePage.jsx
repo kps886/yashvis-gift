@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 
 const INDIAN_STATES = [
-    'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh',
-    'Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka',
-    'Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram',
-    'Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
-    'Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
-    'Andaman and Nicobar Islands','Chandigarh',
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana',
+    'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Andaman and Nicobar Islands', 'Chandigarh',
     'Dadra and Nagar Haveli and Daman and Diu',
-    'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry',
+    'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
 
 const emptyAddress = {
@@ -49,20 +49,20 @@ const inputCls = (err) =>
 const ProfilePage = () => {
 
     // ── Profile form ──────────────────────────────────────────
-    const [profile, setProfile]           = useState({ name: '', email: '' });
-    const [passwords, setPasswords]       = useState({ current: '', next: '', confirm: '' });
+    const [profile, setProfile] = useState({ name: '', email: '' });
+    const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
     const [profileLoading, setProfileLoading] = useState(false);
-    const [profileMsg, setProfileMsg]     = useState({ type: '', text: '' });
-    const [profileErrs, setProfileErrs]   = useState({});
+    const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
+    const [profileErrs, setProfileErrs] = useState({});
 
     // ── Addresses ─────────────────────────────────────────────
-    const [addresses, setAddresses]       = useState([]);
-    const [addrLoading, setAddrLoading]   = useState(true);
+    const [addresses, setAddresses] = useState([]);
+    const [addrLoading, setAddrLoading] = useState(true);
     const [showAddrForm, setShowAddrForm] = useState(false);
-    const [addrForm, setAddrForm]         = useState(emptyAddress);
-    const [addrErrs, setAddrErrs]         = useState({});
-    const [addrMsg, setAddrMsg]           = useState({ type: '', text: '' });
-    const [addrSaving, setAddrSaving]     = useState(false);
+    const [addrForm, setAddrForm] = useState(emptyAddress);
+    const [addrErrs, setAddrErrs] = useState({});
+    const [addrMsg, setAddrMsg] = useState({ type: '', text: '' });
+    const [addrSaving, setAddrSaving] = useState(false);
 
     // Load user data
     useEffect(() => {
@@ -77,10 +77,37 @@ const ProfilePage = () => {
         load();
     }, []);
 
+    // ── Auto-fill City and State from Pincode ─────────────────
+    useEffect(() => {
+        const fetchLocation = async () => {
+            if (addrForm.pincode.length === 6 && /^\d{6}$/.test(addrForm.pincode)) {
+                try {
+                    const response = await fetch(`https://api.zippopotam.us/IN/${addrForm.pincode}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const place = data.places[0];
+
+                        setAddrForm(prev => ({
+                            ...prev,
+                            city: place["place name"],
+                            state: place["state"]
+                        }));
+
+                        setAddrErrs(prev => ({ ...prev, city: '', state: '' }));
+                    }
+                } catch (error) {
+                    console.error("Error fetching pincode details", error);
+                }
+            }
+        };
+
+        fetchLocation();
+    }, [addrForm.pincode]);
+
     // ── Profile update ────────────────────────────────────────
     const validateProfile = () => {
         const e = {};
-        if (!profile.name.trim())  e.name  = 'Name is required';
+        if (!profile.name.trim()) e.name = 'Name is required';
         if (!profile.email.trim()) e.email = 'Email is required';
         if (passwords.next && passwords.next.length < 6)
             e.next = 'Password must be at least 6 characters';
@@ -120,7 +147,7 @@ const ProfilePage = () => {
         if (!/^\d{10}$/.test(addrForm.phone.replace(/\s/g, '')))
             e.phone = 'Enter a valid 10-digit number';
         if (!addrForm.line1.trim()) e.line1 = 'Required';
-        if (!addrForm.city.trim())  e.city  = 'Required';
+        if (!addrForm.city.trim()) e.city = 'Required';
         if (!/^\d{6}$/.test(addrForm.pincode)) e.pincode = 'Enter a valid 6-digit pincode';
         setAddrErrs(e);
         return Object.keys(e).length === 0;
@@ -167,11 +194,10 @@ const ProfilePage = () => {
     };
 
     const Msg = ({ msg }) => msg.text ? (
-        <div className={`p-3 rounded text-sm border ${
-            msg.type === 'success'
+        <div className={`p-3 rounded text-sm border ${msg.type === 'success'
                 ? 'bg-green-500/10 border-green-500/40 text-green-400'
                 : 'bg-red-500/10 border-red-500/40 text-red-400'
-        }`}>
+            }`}>
             {msg.text}
         </div>
     ) : null;
@@ -276,11 +302,10 @@ const ProfilePage = () => {
                                     {addresses.map(addr => (
                                         <div
                                             key={addr._id}
-                                            className={`p-4 border rounded transition-colors ${
-                                                addr.isDefault
+                                            className={`p-4 border rounded transition-colors ${addr.isDefault
                                                     ? 'border-accent-gold bg-accent-gold/5'
                                                     : 'border-border-color'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="text-sm space-y-0.5">

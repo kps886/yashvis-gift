@@ -10,24 +10,24 @@ const loadRazorpay = () =>
         if (window.Razorpay) return resolve(true);
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload  = () => resolve(true);
+        script.onload = () => resolve(true);
         script.onerror = () => resolve(false);
         document.body.appendChild(script);
     });
 
 // ── Indian states list ────────────────────────────────────────
 const INDIAN_STATES = [
-    'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh',
-    'Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka',
-    'Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram',
-    'Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
-    'Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
-    'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
-    'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry',
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana',
+    'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
 
 const DELIVERY_THRESHOLD = 500;
-const DELIVERY_FEE       = 50;
+const DELIVERY_FEE = 50;
 
 // ── Empty address form ────────────────────────────────────────
 const emptyAddress = {
@@ -41,27 +41,24 @@ const StepBar = ({ current }) => {
     return (
         <div className="flex items-center justify-center mb-10 gap-0">
             {steps.map((label, i) => {
-                const idx   = i + 1;
-                const done  = idx < current;
+                const idx = i + 1;
+                const done = idx < current;
                 const active = idx === current;
                 return (
                     <React.Fragment key={label}>
                         <div className="flex flex-col items-center">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-colors ${
-                                done   ? 'bg-accent-gold border-accent-gold text-primary-bg' :
-                                active ? 'border-accent-gold text-accent-gold' :
-                                         'border-border-color text-text-secondary'
-                            }`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-colors ${done ? 'bg-accent-gold border-accent-gold text-primary-bg' :
+                                    active ? 'border-accent-gold text-accent-gold' :
+                                        'border-border-color text-text-secondary'
+                                }`}>
                                 {done ? '✓' : idx}
                             </div>
-                            <span className={`mt-1 text-xs font-semibold uppercase tracking-wider ${
-                                active ? 'text-accent-gold' : 'text-text-secondary'
-                            }`}>{label}</span>
+                            <span className={`mt-1 text-xs font-semibold uppercase tracking-wider ${active ? 'text-accent-gold' : 'text-text-secondary'
+                                }`}>{label}</span>
                         </div>
                         {i < steps.length - 1 && (
-                            <div className={`flex-1 h-0.5 mx-2 mb-5 transition-colors ${
-                                done ? 'bg-accent-gold' : 'bg-border-color'
-                            }`} />
+                            <div className={`flex-1 h-0.5 mx-2 mb-5 transition-colors ${done ? 'bg-accent-gold' : 'bg-border-color'
+                                }`} />
                         )}
                     </React.Fragment>
                 );
@@ -140,9 +137,8 @@ const Field = ({ label, name, type = 'text', required, half, children, value, on
                 type={type}
                 value={value}
                 onChange={onChange}
-                className={`w-full p-3 bg-primary-bg border rounded focus:outline-none focus:border-accent-gold transition-colors ${
-                    error ? 'border-red-500' : 'border-border-color'
-                }`}
+                className={`w-full p-3 bg-primary-bg border rounded focus:outline-none focus:border-accent-gold transition-colors ${error ? 'border-red-500' : 'border-border-color'
+                    }`}
             />
         )}
         {error && (
@@ -156,26 +152,26 @@ const Field = ({ label, name, type = 'text', required, half, children, value, on
 // ─────────────────────────────────────────────────────────────
 const CheckoutPage = () => {
     const { cartItems, clearCart, totalPrice } = useContext(CartContext);
-    const { user }   = useAuth();
-    const navigate   = useNavigate();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
-    const [step, setStep]                   = useState(1);
-    const [address, setAddress]             = useState(emptyAddress);
+    const [step, setStep] = useState(1);
+    const [address, setAddress] = useState(emptyAddress);
     const [savedAddresses, setSavedAddresses] = useState([]);
     const [useNewAddress, setUseNewAddress] = useState(true);
-    const [promoInput, setPromoInput]       = useState('');
-    const [promoResult, setPromoResult]     = useState(null);  // { code, discount, message }
-    const [promoError, setPromoError]       = useState('');
-    const [promoLoading, setPromoLoading]   = useState(false);
-    const [placing, setPlacing]             = useState(false);
-    const [error, setError]                 = useState('');
+    const [promoInput, setPromoInput] = useState('');
+    const [promoResult, setPromoResult] = useState(null);  // { code, discount, message }
+    const [promoError, setPromoError] = useState('');
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [placing, setPlacing] = useState(false);
+    const [error, setError] = useState('');
     const [addressErrors, setAddressErrors] = useState({});
 
     // Computed prices
-    const subtotal    = totalPrice;
+    const subtotal = totalPrice;
     const deliveryFee = subtotal >= DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const discount    = promoResult?.discount || 0;
-    const total       = Math.max(subtotal + deliveryFee - discount, 1);
+    const discount = promoResult?.discount || 0;
+    const total = Math.max(subtotal + deliveryFee - discount, 1);
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -199,6 +195,34 @@ const CheckoutPage = () => {
         fetchAddresses();
     }, []);
 
+    // ── Auto-fill City and State from Pincode ─────────────────
+    useEffect(() => {
+        const fetchLocation = async () => {
+            if (address.pincode.length === 6 && /^\d{6}$/.test(address.pincode)) {
+                try {
+                    const response = await fetch(`https://api.zippopotam.us/IN/${address.pincode}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const place = data.places[0];
+
+                        setAddress(prev => ({
+                            ...prev,
+                            city: place["place name"],
+                            state: place["state"]
+                        }));
+
+                        // Clear any existing errors for these fields
+                        setAddressErrors(prev => ({ ...prev, city: '', state: '' }));
+                    }
+                } catch (error) {
+                    console.error("Error fetching pincode details", error);
+                }
+            }
+        };
+
+        fetchLocation();
+    }, [address.pincode]);
+
     // ── Address validation ────────────────────────────────────
     const validateAddress = () => {
         const errs = {};
@@ -206,7 +230,7 @@ const CheckoutPage = () => {
         if (!address.phone.trim() || !/^\d{10}$/.test(address.phone.replace(/\s/g, '')))
             errs.phone = 'Enter a valid 10-digit phone number';
         if (!address.line1.trim()) errs.line1 = 'Address line 1 is required';
-        if (!address.city.trim())  errs.city  = 'City is required';
+        if (!address.city.trim()) errs.city = 'City is required';
         if (!address.state.trim()) errs.state = 'State is required';
         if (!address.pincode.trim() || !/^\d{6}$/.test(address.pincode))
             errs.pincode = 'Enter a valid 6-digit pincode';
@@ -261,9 +285,9 @@ const CheckoutPage = () => {
             // 2. Create order on backend — get razorpayOrderId
             const { data } = await api.post('/api/orders/create-payment', {
                 items: cartItems.map(item => ({
-                    product:  item._id,
+                    product: item._id,
                     quantity: item.qty,
-                    size:     item.size || null,
+                    size: item.size || null,
                 })),
                 shippingAddress: address,
                 promoCode: promoResult?.code || null,
@@ -271,15 +295,15 @@ const CheckoutPage = () => {
 
             // 3. Open Razorpay checkout
             const options = {
-                key:         data.keyId,
-                amount:      data.amount,
-                currency:    data.currency,
-                name:        'MonikaCreation',
+                key: data.keyId,
+                amount: data.amount,
+                currency: data.currency,
+                name: 'MonikaCreation',
                 description: 'Order Payment',
-                order_id:    data.razorpayOrderId,
+                order_id: data.razorpayOrderId,
                 prefill: {
-                    name:    user.name,
-                    email:   user.email,
+                    name: user.name,
+                    email: user.email,
                     contact: address.phone,
                 },
                 theme: { color: '#D4AF37' },
@@ -288,8 +312,8 @@ const CheckoutPage = () => {
                     // 4. Payment success — verify on backend
                     try {
                         await api.post('/api/orders/verify-payment', {
-                            orderId:           data.orderId,
-                            razorpayOrderId:   response.razorpay_order_id,
+                            orderId: data.orderId,
+                            razorpayOrderId: response.razorpay_order_id,
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature,
                         });
@@ -343,11 +367,10 @@ const CheckoutPage = () => {
                                 <div className="mb-5 space-y-2">
                                     {savedAddresses.map((a, i) => (
                                         <label key={i}
-                                            className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition-colors ${
-                                                !useNewAddress && address === a
+                                            className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition-colors ${!useNewAddress && address === a
                                                     ? 'border-accent-gold bg-accent-gold/5'
                                                     : 'border-border-color hover:border-text-secondary'
-                                            }`}>
+                                                }`}>
                                             <input
                                                 type="radio"
                                                 name="savedAddr"
@@ -365,11 +388,10 @@ const CheckoutPage = () => {
                                     ))}
                                     <button
                                         onClick={() => { setAddress(emptyAddress); setUseNewAddress(true); }}
-                                        className={`w-full p-3 border rounded text-sm font-semibold transition-colors text-left ${
-                                            useNewAddress
+                                        className={`w-full p-3 border rounded text-sm font-semibold transition-colors text-left ${useNewAddress
                                                 ? 'border-accent-gold text-accent-gold'
                                                 : 'border-border-color text-text-secondary hover:border-text-secondary'
-                                        }`}>
+                                            }`}>
                                         + Use a new address
                                     </button>
                                 </div>
@@ -378,41 +400,41 @@ const CheckoutPage = () => {
                             {/* Address form */}
                             {(useNewAddress || savedAddresses.length === 0) && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Field 
-                                        label="Full Name" 
-                                        required half 
+                                    <Field
+                                        label="Full Name"
+                                        required half
                                         value={address.fullName}
                                         onChange={e => { setAddress({ ...address, fullName: e.target.value }); setAddressErrors({ ...addressErrors, fullName: '' }); }}
                                         error={addressErrors.fullName}
                                     />
-                                    <Field 
-                                        label="Phone Number" 
-                                        type="tel" required half 
+                                    <Field
+                                        label="Phone Number"
+                                        type="tel" required half
                                         value={address.phone}
                                         onChange={e => { setAddress({ ...address, phone: e.target.value }); setAddressErrors({ ...addressErrors, phone: '' }); }}
                                         error={addressErrors.phone}
                                     />
-                                    <Field 
-                                        label="Address Line 1" 
-                                        required 
+                                    <Field
+                                        label="Address Line 1"
+                                        required
                                         value={address.line1}
                                         onChange={e => { setAddress({ ...address, line1: e.target.value }); setAddressErrors({ ...addressErrors, line1: '' }); }}
                                         error={addressErrors.line1}
                                     />
-                                    <Field 
-                                        label="Address Line 2 (optional)" 
+                                    <Field
+                                        label="Address Line 2 (optional)"
                                         value={address.line2}
                                         onChange={e => setAddress({ ...address, line2: e.target.value })}
                                     />
-                                    <Field 
-                                        label="City" 
-                                        required half 
+                                    <Field
+                                        label="City"
+                                        required half
                                         value={address.city}
                                         onChange={e => { setAddress({ ...address, city: e.target.value }); setAddressErrors({ ...addressErrors, city: '' }); }}
                                         error={addressErrors.city}
                                     />
-                                    <Field 
-                                        label="State" 
+                                    <Field
+                                        label="State"
                                         required half error={addressErrors.state}>
                                         <select
                                             value={address.state}
@@ -424,16 +446,16 @@ const CheckoutPage = () => {
                                             ))}
                                         </select>
                                     </Field>
-                                    <Field 
-                                        label="Pincode" 
-                                        required half 
+                                    <Field
+                                        label="Pincode"
+                                        required half
                                         value={address.pincode}
                                         onChange={e => { setAddress({ ...address, pincode: e.target.value }); setAddressErrors({ ...addressErrors, pincode: '' }); }}
                                         error={addressErrors.pincode}
                                     />
-                                    <Field 
-                                        label="Country" 
-                                        required half 
+                                    <Field
+                                        label="Country"
+                                        required half
                                         value={address.country}
                                         onChange={e => { setAddress({ ...address, country: e.target.value }); setAddressErrors({ ...addressErrors, country: '' }); }}
                                         error={addressErrors.country}
