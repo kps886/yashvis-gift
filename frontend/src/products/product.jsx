@@ -4,6 +4,7 @@ import api from '../api';
 import { CartContext } from '../cart/cartProvider';
 import { useAuth } from '../auth/AuthContext';
 import { WishlistContext } from '../wishlist/WishlistContext';
+import SEOTags from '../components/SEOTags';
 
 // ── Star components ────────────────────────────
 
@@ -134,6 +135,11 @@ const ProductDetailsPage = () => {
 
     return (
         <div className="container mx-auto py-10 px-4 max-w-6xl">
+            <SEOTags 
+                title={product.name}
+                description={product.description}
+                image={product.images?.[0]} 
+            />
             <Link to="/" className="mb-6 inline-block text-accent-gold hover:underline text-sm">
                 ← Back to Shop
             </Link>

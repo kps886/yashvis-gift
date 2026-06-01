@@ -20,6 +20,9 @@ import ForgotPasswordPage from './login/ForgotPasswordPage';
 import ResetPasswordPage from './login/ResetPasswordPage';
 import OTPVerificationPage from './login/OTPVerificationPage';
 import { Toaster } from 'react-hot-toast';
+import { HelmetProvider } from 'react-helmet-async';
+import SEOTags from './components/SEOTags';
+import { TermsOfService, PrivacyPolicy, ShippingPolicy, RefundPolicy } from './pages/LegalPages'; // Adjust path as needed
 
 // ── Icons ────────────────────────────────────────────────────
 const SunIcon = () => (
@@ -456,9 +459,8 @@ const ProductCard = ({ product }) => {
                         src={product.images?.[0] || 'https://placehold.co/400x400/222222/D4AF37?text=MonikaCreation'}
                         alt={product.name}
                         onLoad={() => setImgLoaded(true)}
-                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${
-                            imgLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-sm'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${imgLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-sm'
+                            }`}
                     />
                 </Link>
             </div>
@@ -553,6 +555,10 @@ const HomePage = ({ products, loading, error, category, setCategory, search, set
     };
     return (
         <div>
+            <SEOTags
+                title="Luxury Curated Collections"
+                description="Discover the finest Kurta Sets, Sherwanis, and luxury accessories at Monika Creation."
+            />
             {/* Hero */}
             {!category && !search && !sizeFilter && !minPrice && !maxPrice && page === 1 && (
                 <section className="h-[55vh] bg-gradient-to-br from-gray-900 via-gray-800
@@ -891,70 +897,72 @@ export default function App() {
     `, []);
 
     return (
-        <AuthProvider>
-            <CartProvider>
-                <WishlistProvider>
-                    <Router>
-                        <style>{`
+        <HelmetProvider>
+            <AuthProvider>
+                <CartProvider>
+                    <WishlistProvider>
+                        <Router>
+                            <style>{`
                         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
                         ${themeStyles}
                         `}</style>
 
-                        <Toaster 
-                            position="top-center"
-                            reverseOrder={false}
-                            toastOptions={{
-                                // Default styling for all toasts
-                                style: {
-                                    background: 'var(--secondary-bg)',
-                                    color: 'var(--text-primary)',
-                                    border: '1px solid var(--border-color)',
-                                    fontFamily: "'Montserrat', sans-serif",
-                                    fontSize: '14px',
-                                },
-                                // Specific styling for success toasts
-                                success: {
-                                    iconTheme: {
-                                        primary: 'var(--accent-gold)',
-                                        secondary: 'var(--primary-bg)',
-                                    },
-                                },
-                                // Specific styling for error toasts
-                                error: {
+                            <Toaster
+                                position="top-center"
+                                reverseOrder={false}
+                                toastOptions={{
+                                    // Default styling for all toasts
                                     style: {
-                                        border: '1px solid #ef4444',
+                                        background: 'var(--secondary-bg)',
+                                        color: 'var(--text-primary)',
+                                        border: '1px solid var(--border-color)',
+                                        fontFamily: "'Montserrat', sans-serif",
+                                        fontSize: '14px',
                                     },
-                                },
-                            }}
-                        />
+                                    // Specific styling for success toasts
+                                    success: {
+                                        iconTheme: {
+                                            primary: 'var(--accent-gold)',
+                                            secondary: 'var(--primary-bg)',
+                                        },
+                                    },
+                                    // Specific styling for error toasts
+                                    error: {
+                                        style: {
+                                            border: '1px solid #ef4444',
+                                        },
+                                    },
+                                }}
+                            />
 
-                        <AppRoutes
-                            theme={theme}
-                            toggleTheme={toggleTheme}
-                            products={products}
-                            loading={loading}
-                            error={error}
-                            category={category}
-                            setCategory={setCategory}
-                            search={search}
-                            setSearch={setSearch}
-                            sort={sort}
-                            setSort={setSort}
-                            page={page}
-                            setPage={setPage}
-                            pagination={pagination}
-                            minPrice={minPrice}
-                            setMinPrice={setMinPrice}
-                            maxPrice={maxPrice}
-                            setMaxPrice={setMaxPrice}
-                            sizeFilter={sizeFilter}
-                            setSizeFilter={setSizeFilter}
-                            setRefreshTrigger={setRefreshTrigger}
-                        />
-                    </Router>
-                </WishlistProvider>
-            </CartProvider>
-        </AuthProvider>
+                            <AppRoutes
+                                theme={theme}
+                                toggleTheme={toggleTheme}
+                                products={products}
+                                loading={loading}
+                                error={error}
+                                category={category}
+                                setCategory={setCategory}
+                                search={search}
+                                setSearch={setSearch}
+                                sort={sort}
+                                setSort={setSort}
+                                page={page}
+                                setPage={setPage}
+                                pagination={pagination}
+                                minPrice={minPrice}
+                                setMinPrice={setMinPrice}
+                                maxPrice={maxPrice}
+                                setMaxPrice={setMaxPrice}
+                                sizeFilter={sizeFilter}
+                                setSizeFilter={setSizeFilter}
+                                setRefreshTrigger={setRefreshTrigger}
+                            />
+                        </Router>
+                    </WishlistProvider>
+                </CartProvider>
+            </AuthProvider>
+        </HelmetProvider>
     );
 }
 
@@ -1051,13 +1059,30 @@ function AppRoutes({ theme, toggleTheme, products, loading, error, category, set
                                         <ProfilePage />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/terms" element={<TermsOfService />} />
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
+                                <Route path="/shipping" element={<ShippingPolicy />} />
+                                <Route path="/refund" element={<RefundPolicy />} />
 
                                 {/* Catch-all */}
                                 <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                         </main>
-                        <footer style={{ backgroundColor: 'var(--secondary-bg)', borderTop: '1px solid var(--border-color)' }} className="text-center p-8 mt-auto">
-                            <p className="text-text-secondary text-sm">&copy; 2025 MonikaCreation. All Rights Reserved.</p>
+                        <footer style={{ backgroundColor: 'var(--secondary-bg)', borderTop: '1px solid var(--border-color)' }} className="py-8 px-4 mt-auto">
+                            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6">
+                                {/* Top Row: Legal Links */}
+                                <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm font-semibold">
+                                    <Link to="/terms" className="text-text-secondary hover:text-accent-gold transition-colors">Terms of Service</Link>
+                                    <Link to="/privacy" className="text-text-secondary hover:text-accent-gold transition-colors">Privacy Policy</Link>
+                                    <Link to="/shipping" className="text-text-secondary hover:text-accent-gold transition-colors">Shipping Policy</Link>
+                                    <Link to="/refund" className="text-text-secondary hover:text-accent-gold transition-colors">Cancellation & Refund</Link>
+                                </div>
+                                
+                                {/* Bottom Row: Copyright */}
+                                <p className="text-text-secondary text-sm text-center">
+                                    &copy; {new Date().getFullYear()} MonikaCreation. All Rights Reserved.
+                                </p>
+                            </div>
                         </footer>
                     </>
                 } />
