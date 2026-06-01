@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from './../api';
 import { useAuth } from '../auth/AuthContext';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -58,16 +58,19 @@ const UsersPanel = ({ currentUserId }) => {
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [page, setPage] = useState(1);         // <-- NEW
+    const [totalPages, setTotalPages] = useState(1);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/api/users');
-            setUsers(data);
+            const { data } = await api.get(`/api/users?page=${page}&limit=20`);
+            setUsers(data.users);
+            setTotalPages(data.pages);
         } catch { setError('Failed to load users'); }
         setLoading(false);
-    };
-    useEffect(() => { fetchUsers(); }, []);
+    }, [page]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -211,6 +214,13 @@ const UsersPanel = ({ currentUserId }) => {
                             ))}
                         </tbody>
                     </table>
+                    {totalPages > 1 && (
+                        <div className="flex justify-between items-center mt-4 p-4 border-t border-border-color">
+                            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50">Previous</button>
+                            <span className="text-sm text-text-secondary">Page {page} of {totalPages}</span>
+                            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50">Next</button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -220,6 +230,8 @@ const UsersPanel = ({ currentUserId }) => {
 // ── Orders panel ──────────────────────────────────────────────
 const OrdersPanel = () => {
     const [orders, setOrders] = useState([]);
+    const [page, setPage] = useState(1);         // <-- NEW
+    const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
     const [statusEdit, setStatusEdit] = useState({});   // { [orderId]: { status, tracking } }
@@ -228,15 +240,17 @@ const OrdersPanel = () => {
     const [success, setSuccess] = useState('');
     const [filter, setFilter] = useState('all');
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/api/orders');
-            setOrders(data);
+            const { data } = await api.get(`/api/orders?page=${page}&limit=20&status=${filter}`);
+            setOrders(data.orders);
+            setTotalPages(data.pages);
         } catch { setError('Failed to load orders'); }
         setLoading(false);
-    };
-    useEffect(() => { fetchOrders(); }, []);
+    }, [page, filter]);
+    useEffect(() => { setPage(1); }, [filter]);
+    useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
     const handleUpdateStatus = async (orderId) => {
         const edit = statusEdit[orderId];
@@ -269,8 +283,8 @@ const OrdersPanel = () => {
                 {['all', ...STATUSES].map(s => (
                     <button key={s} onClick={() => setFilter(s)}
                         className={`px-3 py-1.5 text-xs font-bold uppercase rounded border transition-colors ${filter === s
-                                ? 'bg-accent-gold text-primary-bg border-accent-gold'
-                                : 'border-border-color text-text-secondary hover:border-text-secondary'
+                            ? 'bg-accent-gold text-primary-bg border-accent-gold'
+                            : 'border-border-color text-text-secondary hover:border-text-secondary'
                             }`}>
                         {s} {s === 'all' ? `(${orders.length})` : `(${orders.filter(o => o.orderStatus === s).length})`}
                     </button>
@@ -283,7 +297,7 @@ const OrdersPanel = () => {
                 <p className="text-center py-12 text-text-secondary">No orders found.</p>
             ) : (
                 <div className="space-y-3">
-                    {filtered.map(order => (
+                    {orders.map(order => (
                         <div key={order._id}
                             className="bg-secondary-bg border border-border-color overflow-hidden">
                             {/* Row header */}
@@ -459,6 +473,13 @@ const OrdersPanel = () => {
                             )}
                         </div>
                     ))}
+                </div>
+            )}
+            {!loading && totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6 p-4 bg-secondary-bg border border-border-color rounded">
+                    <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50">Previous</button>
+                    <span className="text-sm text-text-secondary">Page {page} of {totalPages}</span>
+                    <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="px-4 py-2 border border-border-color text-sm font-semibold hover:border-accent-gold disabled:opacity-50">Next</button>
                 </div>
             )}
         </div>
@@ -773,21 +794,21 @@ const AdminDashboard = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const [u, o, p, pr] = await Promise.all([
-                    api.get('/api/users'),
-                    api.get('/api/orders'),
-                    api.get('/api/products'),
-                    api.get('/api/promo'),
+                // Instantly grab heavy counts from analytics, and fetch the (small) promos array
+                const [analyticsRes, promosRes] = await Promise.all([
+                    api.get('/api/analytics'),
+                    api.get('/api/promo')
                 ]);
+
+                const data = analyticsRes.data;
+
                 setCounts({
-                    users: u.data.length,
-                    orders: o.data.length,
-                    products: p.data.products.length,
-                    promos: pr.data.length,
-                    pending: o.data.filter(x => x.orderStatus === 'pending').length,
-                    revenue: o.data
-                        .filter(x => x.paymentStatus === 'paid')
-                        .reduce((a, x) => a + x.total, 0),
+                    users: data.summary.totalUsers,
+                    orders: data.summary.totalOrders,
+                    products: data.summary.totalProducts,
+                    promos: promosRes.data.length,
+                    pending: data.statusCounts.pending,
+                    revenue: data.summary.totalRevenue,
                 });
             } catch { /* silent */ }
         };

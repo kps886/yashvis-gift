@@ -221,16 +221,31 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────
-// GET /api/orders  →  all orders (staff only)
-// ─────────────────────────────────────────────
+// @desc    Get all orders (staff only)
+// @route   GET /api/orders
+// @access  Private/Employee+
 router.get('/', protect, employeeAndAbove, async (req, res) => {
     try {
-        const orders = await Order.find({})
-            .sort({ createdAt: -1 })
-            .populate('user', 'name email')
-            .populate('items.product', 'name');
-        res.json(orders);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        
+        // Allow backend filtering by status so pagination math stays accurate
+        const filter = req.query.status && req.query.status !== 'all' 
+            ? { orderStatus: req.query.status } 
+            : {};
+
+        const [orders, total] = await Promise.all([
+            Order.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('user', 'name email')
+                .populate('items.product', 'name'),
+            Order.countDocuments(filter)
+        ]);
+
+        res.json({ orders, page, pages: Math.ceil(total / limit), total });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching orders' });
     }

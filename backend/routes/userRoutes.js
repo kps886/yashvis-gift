@@ -252,8 +252,16 @@ router.get('/wishlist', protect, async (req, res) => {
 // @access  Private/Admin
 router.get('/', protect, adminOnly, async (req, res) => {
     try {
-        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
-        res.json(users);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        const [users, total] = await Promise.all([
+            User.find({}).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
+            User.countDocuments({})
+        ]);
+
+        res.json({ users, page, pages: Math.ceil(total / limit), total });
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching users' });
     }

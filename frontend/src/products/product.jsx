@@ -4,7 +4,6 @@ import api from '../api';
 import { CartContext } from '../cart/cartProvider';
 import { useAuth } from '../auth/AuthContext';
 import { WishlistContext } from '../wishlist/WishlistContext';
-import toast from 'react-hot-toast';
 
 // ── Star components ────────────────────────────
 
